@@ -97,6 +97,7 @@ export interface AssignedTask {
   task_name: string
   task_url: string
   task_transcript: string
+  initial_transcript?: string
   state: 'annotating' | 'submitted' | 'reviewing' | 'finalising' | 'completed' | 'trashed'
   batch_name: string
   group: string
