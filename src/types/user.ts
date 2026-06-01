@@ -14,6 +14,7 @@ export interface User {
   role?: UserRole
   group_name?: string
   group_id?: string
+  application?: string
   picture?: string
   createdAt?: Date
 }
