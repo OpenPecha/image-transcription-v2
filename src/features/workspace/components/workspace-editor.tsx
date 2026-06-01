@@ -7,6 +7,7 @@ import { TrashConfirmationDialog } from './trash-confirmation-dialog'
 import { EditorOverlay } from './editor-overlay'
 import { EditorToolbar } from './editor-toolbar'
 import { EmptyTasksState } from './empty-tasks-state'
+import { TranscriptDiffViewer } from './transcript-diff-viewer'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/features/auth'
@@ -31,9 +32,11 @@ export function WorkspaceEditor() {
   // State
   const [text, setText] = useState('')
   const [originalOcrText, setOriginalOcrText] = useState('')
+  const [initialTranscript, setInitialTranscript] = useState('')
   const [splitPosition, setSplitPosition] = useState(50)
   const [isDragging, setIsDragging] = useState(false)
   const [trashDialogOpen, setTrashDialogOpen] = useState(false)
+  const [showDiff, setShowDiff] = useState(false)
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -63,20 +66,34 @@ export function WorkspaceEditor() {
   const isLoadingNextTask = isFetching && !isLoading
   const showOverlay = isLoadingNextTask || isMutating
 
+  // Reviewer role check
+  const isReviewer =
+    currentUser?.role === UserRole.Reviewer ||
+    currentUser?.role === UserRole.FinalReviewer
+
+  // Can show diff only for reviewers when initial_transcript exists
+  const canShowDiff =
+    isReviewer &&
+    !!task?.initial_transcript &&
+    task.initial_transcript.trim().length > 0
+
   // Track task ID to detect task changes
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null)
 
   // Load task text when task changes (restore from local draft if available)
   if (task && task.task_id !== currentTaskId) {
     setCurrentTaskId(task.task_id)
-    // Restore from local draft if available, otherwise use server transcript
     const restoredText = savedDraft ?? task.task_transcript ?? ''
     setText(restoredText)
     setOriginalOcrText(task.task_transcript ?? '')
+    setInitialTranscript(task.initial_transcript ?? '')
+    setShowDiff(false) // reset diff view on new task
   } else if (!task && currentTaskId !== null) {
     setCurrentTaskId(null)
     setText('')
     setOriginalOcrText('')
+    setInitialTranscript('')
+    setShowDiff(false)
   }
 
   // Clear handler for toolbar
@@ -88,6 +105,11 @@ export function WorkspaceEditor() {
   const handleRestoreOriginal = useCallback(() => {
     setText(originalOcrText)
   }, [originalOcrText])
+
+  // Diff toggle handler
+  const handleToggleDiff = useCallback(() => {
+    setShowDiff((prev) => !prev)
+  }, [])
 
   // Submit handler
   const handleSubmit = useCallback(() => {
@@ -193,7 +215,7 @@ export function WorkspaceEditor() {
 
   // Track orientation changes to reset split position
   const [lastOrientation, setLastOrientation] = useState<string | undefined>(undefined)
-  
+
   // Reset split position to 50% when orientation changes
   if (task?.orientation !== lastOrientation) {
     setLastOrientation(task?.orientation)
@@ -341,31 +363,45 @@ export function WorkspaceEditor() {
               hasContent={text.length > 0}
               hasOriginalContent={originalOcrText.length > 0 && text !== originalOcrText}
               isDisabled={!canEdit || showOverlay}
+              canShowDiff={canShowDiff}
+              showDiff={showDiff}
+              onToggleDiff={handleToggleDiff}
             />
 
-            {/* Textarea */}
-            <textarea
-              id="editor-textarea"
-              name="editor-textarea"
-              ref={textareaRef}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              readOnly={!canEdit || showOverlay}
-              placeholder={t('editor.placeholder')}
-              className={cn(
-                'flex-1 w-full resize-none bg-card p-5',
-                'text-foreground placeholder:text-placeholder',
-                'focus:outline-none focus:ring-0',
-                'transition-all duration-200',
-                (!canEdit || showOverlay) && 'cursor-default opacity-80'
-              )}
-              style={{
-                fontFamily: FONT_FAMILY_MAP[editorFontFamily],
-                fontSize: `${editorFontSize}px`,
-                lineHeight: 1.6,
-              }}
-              spellCheck={false}
-            />
+            {/* Diff Viewer (reviewer only, when toggled on) */}
+            {showDiff && canShowDiff ? (
+              <TranscriptDiffViewer
+                initialTranscript={initialTranscript}
+                annotatorTranscript={originalOcrText}
+                reviewerTranscript={text}
+                fontFamily={editorFontFamily}
+                fontSize={editorFontSize}
+              />
+            ) : (
+              /* Textarea */
+              <textarea
+                id="editor-textarea"
+                name="editor-textarea"
+                ref={textareaRef}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                readOnly={!canEdit || showOverlay}
+                placeholder={t('editor.placeholder')}
+                className={cn(
+                  'flex-1 w-full resize-none bg-card p-5',
+                  'text-foreground placeholder:text-placeholder',
+                  'focus:outline-none focus:ring-0',
+                  'transition-all duration-200',
+                  (!canEdit || showOverlay) && 'cursor-default opacity-80'
+                )}
+                style={{
+                  fontFamily: FONT_FAMILY_MAP[editorFontFamily],
+                  fontSize: `${editorFontSize}px`,
+                  lineHeight: 1.6,
+                }}
+                spellCheck={false}
+              />
+            )}
           </div>
         </div>
 

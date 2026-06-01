@@ -6,7 +6,9 @@
     "unsavedChanges": "མ་ཉར་བའི་བཅོས་བསྒྱུར།",
     "cleared": "ཡི་གེ་བསྒྱུར་བ་གཙང་བཟོས།",
     "clearedDescription": "ཡི་གེའི་ས་ཁོངས་གཙང་བཟོས།",
-    "undo": "ཕྱིར་འཐེན།"
+    "undo": "ཕྱིར་འཐེན།",
+    "compareMode": "དཔེ་བསྡུར།",
+    "editMode": "རྩོམ་སྒྲིག"
   },
   "imageCanvas": {
     "sourceImage": "སྒོ་ནས་སྒྲིག།",

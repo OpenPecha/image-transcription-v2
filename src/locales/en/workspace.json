@@ -6,7 +6,9 @@
     "unsavedChanges": "Unsaved changes",
     "cleared": "Transcription cleared",
     "clearedDescription": "The text area has been cleared",
-    "undo": "Undo"
+    "undo": "Undo",
+    "compareMode": "Compare",
+    "editMode": "Edit"
   },
   "imageCanvas": {
     "sourceImage": "Source Image",

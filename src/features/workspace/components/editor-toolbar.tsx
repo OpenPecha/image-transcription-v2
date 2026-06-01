@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Eraser, Type, ALargeSmall, RotateCcw } from 'lucide-react'
+import { Eraser, Type, ALargeSmall, RotateCcw, GitCompare, PenLine } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -20,6 +20,10 @@ type EditorToolbarProps = {
   hasContent: boolean
   hasOriginalContent: boolean
   isDisabled?: boolean
+  // Diff view props — only used for reviewer role
+  showDiff?: boolean
+  onToggleDiff?: () => void
+  canShowDiff?: boolean
 }
 
 export function EditorToolbar({
@@ -28,6 +32,9 @@ export function EditorToolbar({
   hasContent,
   hasOriginalContent,
   isDisabled = false,
+  showDiff = false,
+  onToggleDiff,
+  canShowDiff = false,
 }: EditorToolbarProps) {
   const { t } = useTranslation('workspace')
   const {
@@ -134,8 +141,40 @@ export function EditorToolbar({
       {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Restore Original Button */}
-      {hasOriginalContent && (
+      {/* Compare / Edit toggle — reviewer only */}
+      {canShowDiff && onToggleDiff && (
+        <>
+          <Button
+            id="diff-toggle-btn"
+            variant={showDiff ? 'secondary' : 'ghost'}
+            size="sm"
+            onClick={onToggleDiff}
+            className={cn(
+              'h-8 px-3 text-xs transition-colors gap-1.5',
+              showDiff
+                ? 'bg-primary/10 text-primary hover:bg-primary/20 border border-primary/30'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+            aria-label={showDiff ? t('editor.editMode') : t('editor.compareMode')}
+          >
+            {showDiff ? (
+              <>
+                <PenLine className="h-3.5 w-3.5" />
+                {t('editor.editMode')}
+              </>
+            ) : (
+              <>
+                <GitCompare className="h-3.5 w-3.5" />
+                {t('editor.compareMode')}
+              </>
+            )}
+          </Button>
+          <Separator orientation="vertical" className="h-5" />
+        </>
+      )}
+
+      {/* Restore Original Button — hidden when in diff mode */}
+      {hasOriginalContent && !showDiff && (
         <>
           <Button
             variant="ghost"
@@ -152,24 +191,25 @@ export function EditorToolbar({
         </>
       )}
 
-      {/* Clear Button */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleClear}
-        disabled={isDisabled || !hasContent}
-        className={cn(
-          'h-8 px-3 text-xs transition-colors',
-          hasContent
-            ? 'text-muted-foreground hover:text-destructive hover:bg-destructive/10'
-            : 'text-muted-foreground/50'
-        )}
-        aria-label={t('editor.clear')}
-      >
-        <Eraser className="h-3.5 w-3.5 mr-1.5" />
-        {t('editor.clear')}
-      </Button>
+      {/* Clear Button — hidden when in diff mode */}
+      {!showDiff && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleClear}
+          disabled={isDisabled || !hasContent}
+          className={cn(
+            'h-8 px-3 text-xs transition-colors',
+            hasContent
+              ? 'text-muted-foreground hover:text-destructive hover:bg-destructive/10'
+              : 'text-muted-foreground/50'
+          )}
+          aria-label={t('editor.clear')}
+        >
+          <Eraser className="h-3.5 w-3.5 mr-1.5" />
+          {t('editor.clear')}
+        </Button>
+      )}
     </div>
   )
 }
-
