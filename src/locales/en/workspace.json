@@ -73,5 +73,17 @@
   },
   "branding": {
     "appName": "Image Transcription V2"
+  },
+  "diffResolver": {
+    "workingArea": "Working Area",
+    "preview": "Preview",
+    "optionA": "Option A",
+    "optionB": "Option B",
+    "unresolvedCount": "{{count}} unresolved differences",
+    "allResolved": "All differences resolved",
+    "previewPlaceholder": "Resolved preview will appear here..."
+  },
+  "reviewer": {
+    "pendingAlignment": "Waiting for annotator comparison. The alignment diff will appear here once both annotations are ready."
   }
 }

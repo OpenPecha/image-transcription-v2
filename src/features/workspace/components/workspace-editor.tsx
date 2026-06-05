@@ -1,46 +1,61 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { GripHorizontal, GripVertical, Send, Trash2, XCircle } from 'lucide-react'
+import { GripHorizontal, GripVertical, Send, Trash2 } from 'lucide-react'
 import { ImageCanvas } from './image-canvas'
 import { WorkspaceSidebar } from './workspace-sidebar'
 import { TrashConfirmationDialog } from './trash-confirmation-dialog'
 import { EditorOverlay } from './editor-overlay'
 import { EditorToolbar } from './editor-toolbar'
 import { EmptyTasksState } from './empty-tasks-state'
-import { TranscriptDiffViewer } from './transcript-diff-viewer'
+import { DiffResolver } from './diff-resolver'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/features/auth'
 import { useUIStore } from '@/store/use-ui-store'
 import { FONT_FAMILY_MAP } from './constant'
 import {
+  parseTDiff,
+  resolveSegments,
+  allDiffsResolved,
+  applyDiffSelections,
+  loadDiffDraftSelections,
+  saveDiffDraftSelections,
+  clearDiffDraft,
+  type Segment,
+} from '../utils/parse-tdiff'
+import {
   useGetAssignedTask,
   useSubmitTask,
   useTrashTask,
   useApproveTask,
-  useRejectTask,
 } from '../api'
-import { useLocalDraft } from '../hooks'
+import { loadNonEmptyTextDraft, useLocalDraft } from '../hooks'
 import { cn } from '@/lib/utils'
-import { UserRole } from '@/types'
+import {
+  UserRole,
+  isEditableTaskState,
+  canAnnotatorTrashTask,
+  getAnnotatorBaselineTranscript,
+} from '@/types'
+
+function isReviewerRole(role: UserRole | string | undefined): boolean {
+  return role === UserRole.Reviewer || role === 'reveiwer'
+}
 
 export function WorkspaceEditor() {
   const { t } = useTranslation('workspace')
   const { currentUser } = useAuth()
   const { addToast, editorFontFamily, editorFontSize } = useUIStore()
 
-  // State
   const [text, setText] = useState('')
   const [originalOcrText, setOriginalOcrText] = useState('')
-  const [initialTranscript, setInitialTranscript] = useState('')
-  const [splitPosition, setSplitPosition] = useState(50)
+  const [splitPosition, setSplitPosition] = useState(55)
   const [isDragging, setIsDragging] = useState(false)
   const [trashDialogOpen, setTrashDialogOpen] = useState(false)
-  const [showDiff, setShowDiff] = useState(false)
+  const [segments, setSegments] = useState<Segment[]>([])
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  // API hooks
   const {
     data: task,
     isLoading,
@@ -51,75 +66,110 @@ export function WorkspaceEditor() {
   const submitTask = useSubmitTask(currentUser?.id)
   const trashTask = useTrashTask(currentUser?.id)
   const approveTask = useApproveTask(currentUser?.id)
-  const rejectTask = useRejectTask(currentUser?.id)
 
-  // Local draft auto-save (500ms debounce)
-  const { savedDraft, clearDraft } = useLocalDraft({
+  const isReviewer = isReviewerRole(currentUser?.role)
+  const isAnnotator = currentUser?.role === UserRole.Annotator
+  const canTrash = isAnnotator && task ? canAnnotatorTrashTask(task.state) : false
+  const hasDiffs =
+    isReviewer && (task?.task_transcript?.includes('<t-diff') ?? false)
+  const resolvedText = useMemo(() => resolveSegments(segments), [segments])
+
+  const { clearDraft } = useLocalDraft({
     taskId: task?.task_id ?? null,
     text,
     delay: 500,
+    enabled: !hasDiffs,
   })
 
-  // Derived states
-  const canEdit = task?.state === 'annotating' || task?.state === 'reviewing' || task?.state === 'finalising'
-  const isMutating = submitTask.isPending || trashTask.isPending || approveTask.isPending || rejectTask.isPending
+  const canEdit = task ? isEditableTaskState(task.state) : false
+  const isMutating = submitTask.isPending || trashTask.isPending || approveTask.isPending
   const isLoadingNextTask = isFetching && !isLoading
   const showOverlay = isLoadingNextTask || isMutating
 
-  // Reviewer role check
-  const isReviewer =
-    currentUser?.role === UserRole.Reviewer ||
-    currentUser?.role === UserRole.FinalReviewer
+  const transcriptForSubmit = hasDiffs ? resolvedText : text
 
-  // Can show diff only for reviewers when initial_transcript exists
-  const canShowDiff =
-    isReviewer &&
-    !!task?.initial_transcript &&
-    task.initial_transcript.trim().length > 0
+  // Sync editor state when the assigned task changes
+  useEffect(() => {
+    if (!task) {
+      setText('')
+      setOriginalOcrText('')
+      setSegments([])
+      return
+    }
 
-  // Track task ID to detect task changes
-  const [currentTaskId, setCurrentTaskId] = useState<string | null>(null)
+    const transcript = isReviewer
+      ? (task.task_transcript ?? '')
+      : getAnnotatorBaselineTranscript(task)
 
-  // Load task text when task changes (restore from local draft if available)
-  if (task && task.task_id !== currentTaskId) {
-    setCurrentTaskId(task.task_id)
-    const restoredText = savedDraft ?? task.task_transcript ?? ''
-    setText(restoredText)
-    setOriginalOcrText(task.task_transcript ?? '')
-    setInitialTranscript(task.initial_transcript ?? '')
-    setShowDiff(false) // reset diff view on new task
-  } else if (!task && currentTaskId !== null) {
-    setCurrentTaskId(null)
-    setText('')
-    setOriginalOcrText('')
-    setInitialTranscript('')
-    setShowDiff(false)
-  }
+    const parsed = parseTDiff(transcript)
+    const containsDiffs = isReviewer && parsed.some((seg) => seg.type === 'diff')
 
-  // Clear handler for toolbar
+    let nextSegments = parsed
+    if (containsDiffs) {
+      const savedSelections = loadDiffDraftSelections(task.task_id)
+      if (savedSelections) {
+        nextSegments = applyDiffSelections(parsed, savedSelections)
+      }
+    }
+
+    setSegments(nextSegments)
+    setOriginalOcrText(transcript)
+
+    if (containsDiffs) {
+      setText(resolveSegments(nextSegments))
+    } else if (!isReviewer) {
+      const draft = loadNonEmptyTextDraft(task.task_id)
+      setText(draft ?? transcript)
+    } else {
+      setText('')
+    }
+  }, [task?.task_id, task?.task_transcript, task?.initial_transcript, task?.state, isReviewer])
+
+  // Reset split position when image orientation changes
+  useEffect(() => {
+    if (task?.orientation) {
+      setSplitPosition(50)
+    }
+  }, [task?.orientation])
+
   const handleClear = useCallback(() => {
     setText('')
   }, [])
 
-  // Restore original OCR text handler
   const handleRestoreOriginal = useCallback(() => {
     setText(originalOcrText)
   }, [originalOcrText])
 
-  // Diff toggle handler
-  const handleToggleDiff = useCallback(() => {
-    setShowDiff((prev) => !prev)
-  }, [])
+  const clearAllDrafts = useCallback(() => {
+    clearDraft()
+    if (task) {
+      clearDiffDraft(task.task_id)
+    }
+  }, [clearDraft, task])
 
-  // Submit handler
+  const handleSelectDiff = useCallback(
+    (diffId: number, choice: 's1' | 's2') => {
+      setSegments((prev) => {
+        const next = prev.map((seg) =>
+          seg.type === 'diff' && seg.id === diffId ? { ...seg, selected: choice } : seg
+        )
+        if (task) {
+          saveDiffDraftSelections(task.task_id, next)
+        }
+        return next
+      })
+    },
+    [task]
+  )
+
   const handleSubmit = useCallback(() => {
     if (!task || !currentUser) return
 
     submitTask.mutate(
-      { task_id: task.task_id, user_id: currentUser.id!, transcript: text, submit: true },
+      { task_id: task.task_id, user_id: currentUser.id!, transcript: transcriptForSubmit, submit: true },
       {
         onSuccess: () => {
-          clearDraft()
+          clearAllDrafts()
           addToast({
             title: t('toast.submitted'),
             description: t('toast.submittedDescription'),
@@ -135,9 +185,8 @@ export function WorkspaceEditor() {
         },
       }
     )
-  }, [task, currentUser, text, submitTask, clearDraft, addToast, t])
+  }, [task, currentUser, transcriptForSubmit, submitTask, clearAllDrafts, addToast, t])
 
-  // Trash handler
   const handleTrash = useCallback(() => {
     if (!task || !currentUser) return
 
@@ -145,7 +194,7 @@ export function WorkspaceEditor() {
       { task_id: task.task_id, user_id: currentUser.id!, submit: false },
       {
         onSuccess: () => {
-          clearDraft()
+          clearAllDrafts()
           setTrashDialogOpen(false)
           addToast({ title: t('toast.trashed'), variant: 'default' })
         },
@@ -158,17 +207,21 @@ export function WorkspaceEditor() {
         },
       }
     )
-  }, [task, currentUser, trashTask, clearDraft, addToast, t])
+  }, [task, currentUser, trashTask, clearAllDrafts, addToast, t])
 
-  // Approve handler
   const handleApprove = useCallback(() => {
     if (!task || !currentUser) return
 
     approveTask.mutate(
-      { task_id: task.task_id, user_id: currentUser.id!, transcript: text, approve: true },
+      {
+        task_id: task.task_id,
+        user_id: currentUser.id!,
+        transcript: transcriptForSubmit,
+        approve: true,
+      },
       {
         onSuccess: () => {
-          clearDraft()
+          clearAllDrafts()
           addToast({
             title: t('toast.approved'),
             description: t('toast.approvedDescription'),
@@ -184,45 +237,10 @@ export function WorkspaceEditor() {
         },
       }
     )
-  }, [task, currentUser, text, approveTask, clearDraft, addToast, t])
+  }, [task, currentUser, transcriptForSubmit, approveTask, clearAllDrafts, addToast, t])
 
-  // Reject handler
-  const handleReject = useCallback(() => {
-    if (!task || !currentUser) return
-
-    rejectTask.mutate(
-      { task_id: task.task_id, user_id: currentUser.id!, transcript: text, reject: true },
-      {
-        onSuccess: () => {
-          clearDraft()
-          addToast({ title: t('toast.rejected'), variant: 'default' })
-        },
-        onError: (error: Error) => {
-          addToast({
-            title: t('toast.rejectFailed'),
-            description: error.message,
-            variant: 'destructive',
-          })
-        },
-      }
-    )
-  }, [task, currentUser, text, rejectTask, clearDraft, addToast, t])
-
-  // Derive layout direction from orientation
-  // Portrait images → horizontal split (side-by-side)
-  // Landscape images → vertical split (stacked)
   const isHorizontalLayout = task?.orientation === 'portrait'
 
-  // Track orientation changes to reset split position
-  const [lastOrientation, setLastOrientation] = useState<string | undefined>(undefined)
-
-  // Reset split position to 50% when orientation changes
-  if (task?.orientation !== lastOrientation) {
-    setLastOrientation(task?.orientation)
-    setSplitPosition(50)
-  }
-
-  // Split pane handlers
   const handleMouseDown = useCallback(() => {
     setIsDragging(true)
   }, [])
@@ -233,7 +251,6 @@ export function WorkspaceEditor() {
       const container = e.currentTarget as HTMLElement
       const rect = container.getBoundingClientRect()
 
-      // Calculate position based on layout direction
       const position = isHorizontalLayout
         ? ((e.clientX - rect.left) / rect.width) * 100
         : ((e.clientY - rect.top) / rect.height) * 100
@@ -247,7 +264,6 @@ export function WorkspaceEditor() {
     setIsDragging(false)
   }, [])
 
-  // Loading state - keep sidebar visible, only skeleton main area
   if (isLoading) {
     return (
       <div className="flex h-screen">
@@ -265,7 +281,6 @@ export function WorkspaceEditor() {
     )
   }
 
-  // Empty state - no task available
   if (!task) {
     const noApplicationMessage = !currentUser?.application
       ? 'You have no application assigned. Please contact your administrator.'
@@ -291,16 +306,13 @@ export function WorkspaceEditor() {
 
   return (
     <div className="flex h-screen bg-background">
-      {/* Sidebar */}
       <WorkspaceSidebar
         task={task}
         onRefresh={() => refetch()}
         isLoading={isFetching}
       />
 
-      {/* Main Content */}
       <main className="flex-1 ml-60 flex flex-col">
-        {/* Split Pane Container */}
         <div
           className={cn(
             'relative flex-1 flex overflow-hidden',
@@ -310,13 +322,11 @@ export function WorkspaceEditor() {
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
         >
-          {/* Loading/Mutation Overlay */}
           <EditorOverlay
             show={showOverlay}
             message={isMutating ? t('loading.processing') : t('loading.loadingNext')}
           />
 
-          {/* Image Panel */}
           <div
             className={cn(
               'overflow-hidden flex-shrink-0',
@@ -331,7 +341,6 @@ export function WorkspaceEditor() {
             <ImageCanvas imageUrl={task.task_url} />
           </div>
 
-          {/* Resize Handle */}
           <div
             className={cn(
               'flex-shrink-0 flex items-center justify-center bg-border/80 transition-colors select-none',
@@ -349,36 +358,37 @@ export function WorkspaceEditor() {
             )}
           </div>
 
-          {/* Text Editor Panel */}
           <div
             className={cn(
               'overflow-hidden bg-muted/30 flex-1 flex flex-col',
               isHorizontalLayout ? 'h-full' : 'w-full'
             )}
           >
-            {/* Editor Toolbar */}
             <EditorToolbar
               onClear={handleClear}
               onRestoreOriginal={handleRestoreOriginal}
-              hasContent={text.length > 0}
-              hasOriginalContent={originalOcrText.length > 0 && text !== originalOcrText}
+              hasContent={isAnnotator && !hasDiffs && text.length > 0}
+              hasOriginalContent={
+                isAnnotator && !hasDiffs && originalOcrText.length > 0 && text !== originalOcrText
+              }
               isDisabled={!canEdit || showOverlay}
-              canShowDiff={canShowDiff}
-              showDiff={showDiff}
-              onToggleDiff={handleToggleDiff}
             />
 
-            {/* Diff Viewer (reviewer only, when toggled on) */}
-            {showDiff && canShowDiff ? (
-              <TranscriptDiffViewer
-                initialTranscript={initialTranscript}
-                annotatorTranscript={originalOcrText}
-                reviewerTranscript={text}
+            {hasDiffs ? (
+              <DiffResolver
+                segments={segments}
+                onSelectDiff={handleSelectDiff}
+                resolvedText={resolvedText}
                 fontFamily={editorFontFamily}
                 fontSize={editorFontSize}
               />
+            ) : isReviewer ? (
+              <div className="flex flex-1 items-center justify-center p-8 text-center bg-card">
+                <p className="max-w-md text-sm text-muted-foreground">
+                  {t('reviewer.pendingAlignment')}
+                </p>
+              </div>
             ) : (
-              /* Textarea */
               <textarea
                 id="editor-textarea"
                 name="editor-textarea"
@@ -405,14 +415,11 @@ export function WorkspaceEditor() {
           </div>
         </div>
 
-        {/* Footer */}
         <footer className="grid grid-cols-3 items-center border-t border-border bg-card px-6 py-3">
-          {/* Left Section: Empty Spacer */}
           <div className="flex items-center" />
 
-          {/* Center Section: Actions (Perfectly centered) */}
           <div className="flex items-center justify-center gap-3">
-            {currentUser?.role === UserRole.Annotator && (
+            {isAnnotator && (
               <>
                 <Button
                   variant="success"
@@ -422,47 +429,39 @@ export function WorkspaceEditor() {
                   <Send className="h-4 w-4 mr-2" />
                   {submitTask.isPending ? t('actions.submitting') : t('actions.submit')}
                 </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => setTrashDialogOpen(true)}
-                  disabled={showOverlay || !canEdit}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  {t('actions.trash')}
-                </Button>
+                {canTrash && (
+                  <Button
+                    variant="destructive"
+                    onClick={() => setTrashDialogOpen(true)}
+                    disabled={showOverlay || !canEdit}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {t('actions.trash')}
+                  </Button>
+                )}
               </>
             )}
 
-            {(currentUser?.role === UserRole.Reviewer || currentUser?.role === UserRole.FinalReviewer) && (
-              <>
-                <Button
-                  variant="success"
-                  onClick={handleApprove}
-                  disabled={showOverlay || !canEdit}
-                >
-                  <Send className="h-4 w-4 mr-2" />
-                  {approveTask.isPending ? t('actions.approving') : t('actions.approve')}
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={handleReject}
-                  disabled={showOverlay || !canEdit}
-                >
-                  <XCircle className="h-4 w-4 mr-2" />
-                  {t('actions.reject')}
-                </Button>
-              </>
+            {isReviewer && (
+              <Button
+                variant="success"
+                onClick={handleApprove}
+                disabled={
+                  showOverlay ||
+                  !canEdit ||
+                  (hasDiffs && !allDiffsResolved(segments))
+                }
+              >
+                <Send className="h-4 w-4 mr-2" />
+                {approveTask.isPending ? t('actions.approving') : t('actions.approve')}
+              </Button>
             )}
           </div>
 
-          {/* Right Section: Empty Spacer (Ensures center stays center) */}
-          <div className="flex justify-end">
-            {/* You can put word counts or page numbers here later */}
-          </div>
+          <div className="flex justify-end" />
         </footer>
       </main>
 
-      {/* Trash Dialog */}
       <TrashConfirmationDialog
         open={trashDialogOpen}
         onOpenChange={setTrashDialogOpen}

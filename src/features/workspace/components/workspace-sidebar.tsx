@@ -20,11 +20,16 @@ interface WorkspaceSidebarProps {
 const getStateColor = (state: string): string => {
   switch (state) {
     case 'annotating':
+    case 'annotating_b':
       return 'text-primary fill-primary'
-    case 'submitted':
     case 'reviewing':
+    case 'reviewing_b':
+    case 'half_annotated':
+    case 'half_reviewed':
+    case 'annotated':
       return 'text-warning fill-warning'
-    case 'completed':
+    case 'reviewed':
+    case 'finalised':
       return 'text-success fill-success'
     case 'trashed':
       return 'text-destructive fill-destructive'

@@ -16,10 +16,27 @@ interface AuthProviderProps {
   children: ReactNode
 }
 
+const EMAIL_IDENTIFIER_OVERRIDE_KEY = 'email_identifier_override'
+
+/** Use `?email=` from the URL when present; otherwise fall back to Auth0 email. */
+function getEmailIdentifierOverride(): string | null {
+  const params = new URLSearchParams(window.location.search)
+  const emailFromUrl = params.get('email')?.trim()
+  if (emailFromUrl) {
+    sessionStorage.setItem(EMAIL_IDENTIFIER_OVERRIDE_KEY, emailFromUrl)
+    return emailFromUrl
+  }
+  return sessionStorage.getItem(EMAIL_IDENTIFIER_OVERRIDE_KEY)
+}
+
 // API call to fetch user
 async function getUserDetails(email: string): Promise<User> {
   const date = new Date().toISOString()
-  return await apiClient.get(`/user/by-identifier/${email}?date=${date}`)
+  const user = (await apiClient.get(`/user/by-identifier/${email}?date=${date}`)) as User
+  if (user && (user.role as string) === 'reveiwer') {
+    user.role = UserRole.Reviewer
+  }
+  return user
 }
 
 // Inner provider that uses Auth0 hooks
@@ -41,30 +58,32 @@ const AuthContextProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [isAuthenticated, getAccessTokenSilently])
 
+  const identifierEmail = getEmailIdentifierOverride() ?? auth0User?.email ?? null
+
   // React Query to fetch and manage user details
   const {
     data: userDetails,
     isLoading: isQueryLoading,
     error: queryError,
   } = useQuery<User, Error>({
-    queryKey: ['user-details', auth0User?.email],
+    queryKey: ['user-details', identifierEmail],
     queryFn: async () => {
       const token = await getAccessTokenSilently()
       localStorage.setItem('auth_token', token)
-      return await getUserDetails(auth0User!.email!)
+      return await getUserDetails(identifierEmail!)
     },
-    enabled: isAuthenticated && !!auth0User?.email && !auth0Loading,
+    enabled: isAuthenticated && !!identifierEmail && !auth0Loading,
     retry: false,
   })
 
   // Compute currentUser with fallback if query fails
   const currentUser = useMemo(() => {
     if (userDetails) return userDetails
-    if (isAuthenticated && auth0User?.email && !isQueryLoading && queryError) {
-      return { email: auth0User.email }
+    if (isAuthenticated && identifierEmail && !isQueryLoading && queryError) {
+      return { email: identifierEmail }
     }
     return null
-  }, [userDetails, isAuthenticated, auth0User, isQueryLoading, queryError])
+  }, [userDetails, isAuthenticated, identifierEmail, isQueryLoading, queryError])
 
   // Compute isPendingApproval from 404 API status code
   const isPendingApproval = useMemo(() => {
@@ -73,7 +92,6 @@ const AuthContextProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Combined loading state
   const isLoading = auth0Loading || (isAuthenticated && isQueryLoading && !currentUser)
-
   const getToken = useCallback(async (): Promise<string | null> => {
     try {
       const token = await getAccessTokenSilently()
@@ -98,6 +116,7 @@ const AuthContextProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = useCallback(() => {
     // Clear stored tokens
     localStorage.removeItem('auth_token')
+    sessionStorage.removeItem(EMAIL_IDENTIFIER_OVERRIDE_KEY)
 
     auth0Logout({
       logoutParams: {
@@ -142,14 +161,36 @@ const DevAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [])
 
   const login = useCallback(() => {
-    // Mock login with an annotator user for dev testing
-    const devUser: User = {
-      id: 'u2',
-      username: 'Pema Lhamo',
-      email: 'pema@example.com',
-      role: UserRole.Annotator,
+    // Check URL query parameters for dev testing overrides (e.g. ?role=reviewer&id=real_id)
+    const params = new URLSearchParams(window.location.search)
+    const idParam = params.get('id')
+    const usernameParam = params.get('username')
+    const emailParam = params.get('email')
+    const roleParam = params.get('role')
+
+    let devUser: User = {
+      id: idParam || 'u2',
+      username: usernameParam || 'Pema Lhamo',
+      email: emailParam || 'pema@example.com',
+      role: (roleParam as UserRole) || UserRole.Annotator,
       group_id: 'g1',
     }
+
+    // Adjust defaults if role is reviewer and no custom values are provided
+    if (roleParam === 'reviewer' && !idParam) {
+      devUser.id = 'u3'
+      devUser.username = usernameParam || 'Jampa Tenzin'
+      devUser.email = emailParam || 'jampa@example.com'
+    } else if (roleParam === 'final_reviewer' && !idParam) {
+      devUser.id = 'u4'
+      devUser.username = usernameParam || 'Tashi Dekyi'
+      devUser.email = emailParam || 'tashi@example.com'
+    } else if (roleParam === 'admin' && !idParam) {
+      devUser.id = 'u1'
+      devUser.username = usernameParam || 'Admin User'
+      devUser.email = emailParam || 'admin@example.com'
+    }
+
     localStorage.setItem('dev_user', JSON.stringify(devUser))
     setCurrentUser(devUser)
     window.location.href = '/workspace'

@@ -91,6 +91,53 @@ export interface AssignTaskRequest {
 // Task orientation type
 export type TaskOrientation = 'landscape' | 'portrait'
 
+// ITV2 task states returned by the assign endpoint
+export type AssignedTaskState =
+  | 'pending'
+  | 'annotating'
+  | 'half_annotated'
+  | 'annotating_b'
+  | 'annotated'
+  | 'reviewing'
+  | 'half_reviewed'
+  | 'reviewing_b'
+  | 'reviewed'
+  | 'finalised'
+  | 'trashed'
+
+export const ITV2_EDITABLE_TASK_STATES = [
+  'annotating',
+  'annotating_b',
+  'reviewing',
+  'reviewing_b',
+] as const satisfies readonly AssignedTaskState[]
+
+export function isEditableTaskState(state: AssignedTaskState): boolean {
+  return (ITV2_EDITABLE_TASK_STATES as readonly string[]).includes(state)
+}
+
+/** Annotator A slot — only this slot may trash/reject a task. */
+export function isAnnotatorATaskState(state: AssignedTaskState): boolean {
+  return state === 'annotating'
+}
+
+/** Annotator B slot — receives baseline OCR via initial_transcript, cannot trash. */
+export function isAnnotatorBTaskState(state: AssignedTaskState): boolean {
+  return state === 'annotating_b'
+}
+
+export function canAnnotatorTrashTask(state: AssignedTaskState): boolean {
+  return isAnnotatorATaskState(state)
+}
+
+/** Baseline text shown in the annotator editor (Annotator B is double-blind from Annotator A). */
+export function getAnnotatorBaselineTranscript(task: AssignedTask): string {
+  if (isAnnotatorBTaskState(task.state)) {
+    return (task.initial_transcript?.trim() || task.task_transcript) ?? ''
+  }
+  return task.task_transcript ?? ''
+}
+
 // Assigned task from real backend API
 export interface AssignedTask {
   task_id: string
@@ -98,7 +145,7 @@ export interface AssignedTask {
   task_url: string
   task_transcript: string
   initial_transcript?: string
-  state: 'annotating' | 'submitted' | 'reviewing' | 'finalising' | 'completed' | 'trashed'
+  state: AssignedTaskState
   batch_name: string
   group: string
   orientation?: TaskOrientation
