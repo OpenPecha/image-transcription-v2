@@ -44,13 +44,12 @@ export function BatchList() {
                 isLoading={true}
               />
             ) : (
-              applicationReports?.map((report) => (
+              applicationReports && (
                 <ApplicationBatchSummary
-                  key={report.id}
-                  report={report}
+                  report={applicationReports}
                   isLoading={false}
                 />
-              ))
+              )
             )}
           </div>
 

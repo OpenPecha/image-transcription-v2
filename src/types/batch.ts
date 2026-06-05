@@ -36,7 +36,14 @@ export type BatchExportResponse = {
 }
 
 // Task state for batch task view
-export type BatchTaskState = 'pending' | 'annotated' | 'reviewed' | 'finalised' | 'trashed'
+export type BatchTaskState =
+  | 'pending'
+  | 'half_annotated'
+  | 'annotated'
+  | 'half_reviewed'
+  | 'reviewed'
+  | 'finalised'
+  | 'trashed'
 
 // Individual task from batch tasks endpoint
 export interface BatchTask {
@@ -53,7 +60,9 @@ export interface BatchTask {
 export interface BatchReport extends Batch {
   total_tasks: number
   pending: number
+  half_annotated: number
   annotated: number
+  half_reviewed: number
   reviewed: number
   finalised: number
   trashed: number
@@ -66,7 +75,9 @@ export type ApplicationBatchReport = {
   group_id: string
   total_tasks: number
   pending: number
+  half_annotated: number
   annotated: number
+  half_reviewed: number
   reviewed: number
   finalised: number
   trashed: number
@@ -96,33 +107,47 @@ export const BATCH_STATS_CONFIG = {
     textColor: 'text-slate-700',
     order: 0,
   },
+  half_annotated: {
+    label: 'Half Annotated',
+    color: 'bg-sky-100 text-sky-700',
+    barColor: 'bg-sky-300',
+    textColor: 'text-sky-900',
+    order: 1,
+  },
   annotated: {
     label: 'Annotated',
     color: 'bg-blue-100 text-blue-700',
     barColor: 'bg-indigo-500',
     textColor: 'text-white',
-    order: 1,
+    order: 2,
+  },
+  half_reviewed: {
+    label: 'Half Reviewed',
+    color: 'bg-amber-50 text-amber-700',
+    barColor: 'bg-amber-200',
+    textColor: 'text-amber-900',
+    order: 3,
   },
   reviewed: {
     label: 'Reviewed',
     color: 'bg-amber-100 text-amber-700',
     barColor: 'bg-cyan-500',
     textColor: 'text-white',
-    order: 2,
+    order: 4,
   },
   finalised: {
     label: 'Finalised',
     color: 'bg-emerald-100 text-emerald-700',
     barColor: 'bg-emerald-500',
     textColor: 'text-white',
-    order: 3,
+    order: 5,
   },
   trashed: {
     label: 'Trashed',
     color: 'bg-red-100 text-red-700',
     barColor: 'bg-rose-500',
     textColor: 'text-white',
-    order: 4,
+    order: 6,
     isHatched: true,
   },
 } as const
@@ -130,5 +155,12 @@ export const BATCH_STATS_CONFIG = {
 export type BatchStatKey = keyof typeof BATCH_STATS_CONFIG
 
 // Workflow statuses (excluding trashed)
-export const WORKFLOW_STATS: BatchStatKey[] = ['pending', 'annotated', 'reviewed', 'finalised']
+export const WORKFLOW_STATS: BatchStatKey[] = [
+  'pending',
+  'half_annotated',
+  'annotated',
+  'half_reviewed',
+  'reviewed',
+  'finalised',
+]
 

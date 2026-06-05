@@ -107,7 +107,9 @@
     "states": {
       "all": "All",
       "pending": "Pending",
+      "half_annotated": "Half Annotated",
       "annotated": "Annotated",
+      "half_reviewed": "Half Reviewed",
       "reviewed": "Reviewed",
       "finalised": "Finalised",
       "trashed": "Trashed"

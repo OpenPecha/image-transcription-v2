@@ -16,8 +16,8 @@ export function ApplicationBatchSummary({ report, isLoading }: ApplicationBatchS
     return (
       <div className="space-y-3 pb-4">
         <Skeleton className="h-4 w-56" />
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-          {[...Array(6)].map((_, i) => (
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+          {[...Array(8)].map((_, i) => (
             <Skeleton key={i} className="h-14 w-full rounded-lg" />
           ))}
         </div>
@@ -31,7 +31,9 @@ export function ApplicationBatchSummary({ report, isLoading }: ApplicationBatchS
   const stats = [
     { label: 'Total', value: report.total_tasks, meta: '100%' },
     { label: 'Pending', value: report.pending, meta: `${percent(report.pending, total)}%` },
+    { label: 'Half Annotated', value: report.half_annotated, meta: `${percent(report.half_annotated, total)}%` },
     { label: 'Annotated', value: report.annotated, meta: `${percent(report.annotated, total)}%` },
+    { label: 'Half Reviewed', value: report.half_reviewed, meta: `${percent(report.half_reviewed, total)}%` },
     { label: 'Reviewed', value: report.reviewed, meta: `${percent(report.reviewed, total)}%` },
     { label: 'Finalised', value: report.finalised, meta: `${percent(report.finalised, total)}%` },
     { label: 'Trashed', value: report.trashed, meta: `${percent(report.trashed, total)}%` },
@@ -44,7 +46,7 @@ export function ApplicationBatchSummary({ report, isLoading }: ApplicationBatchS
           {report.name}
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
         {stats.map((item) => (
           <div key={item.label} className="rounded-lg border bg-card px-3 py-2">
             <div className="text-[11px] font-medium text-muted-foreground">{item.label}</div>
