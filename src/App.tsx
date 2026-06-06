@@ -59,7 +59,7 @@ function App() {
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          {/* <AuthGuard /> */}
+          <AuthGuard />
           <RouterProvider router={router} />
         </AuthProvider>
       </QueryClientProvider>
