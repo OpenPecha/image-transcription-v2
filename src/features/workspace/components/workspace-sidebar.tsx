@@ -20,11 +20,17 @@ interface WorkspaceSidebarProps {
 const getStateColor = (state: string): string => {
   switch (state) {
     case 'annotating':
+    case 'annotating_b':
       return 'text-primary fill-primary'
-    case 'submitted':
     case 'reviewing':
+    case 'reviewing_b':
+    case 'half_annotated':
+    case 'half_reviewed':
+    case 'annotated':
       return 'text-warning fill-warning'
-    case 'completed':
+    case 'reviewed':
+    case 'finalising':
+    case 'finalised':
       return 'text-success fill-success'
     case 'trashed':
       return 'text-destructive fill-destructive'
@@ -84,7 +90,7 @@ export function WorkspaceSidebar({
             </div>
             <div className="flex flex-col leading-tight">
               <span className="font-bold text-sidebar-foreground font-inter">Image</span>
-              <span className="text-xs text-sidebar-foreground/70 font-inter">Transcription</span>
+              <span className="text-xs text-sidebar-foreground/70 font-inter">Transcription V2</span>
             </div>
           </div>
       </div>

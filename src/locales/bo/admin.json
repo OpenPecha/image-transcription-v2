@@ -107,8 +107,11 @@
     "states": {
       "all": "ཚང་མ།",
       "pending": "སྒུག་བཞིན།",
+      "half_annotated": "མཆན་བཀོད་ཕྱེད་ཀ",
       "annotated": "མཆན་བཀོད།",
+      "half_reviewed": "བསྐྱར་ཞིབ་ཕྱེད་ཀ",
       "reviewed": "བསྐྱར་ཞིབ་བྱས།",
+      "finalising": "མཇུག་བསྒྲིལ་བཞིན།",
       "finalised": "མཇུག་བསྒྲིལ།",
       "trashed": "བསུབས།"
     },

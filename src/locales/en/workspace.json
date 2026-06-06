@@ -2,11 +2,7 @@
   "editor": {
     "placeholder": "Begin typing or editing...",
     "restoreOriginal": "Restore Original",
-    "clear": "Clear",
     "unsavedChanges": "Unsaved changes",
-    "cleared": "Transcription cleared",
-    "clearedDescription": "The text area has been cleared",
-    "undo": "Undo",
     "compareMode": "Compare",
     "editMode": "Edit"
   },
@@ -51,6 +47,16 @@
       "description": "Are you sure you want to trash \"{{taskName}}\"?",
       "confirm": "Trash Task"
     },
+    "submit": {
+      "title": "Submit Task",
+      "description": "Are you sure you want to submit \"{{taskName}}\"? Your work will be sent for review.",
+      "confirm": "Submit"
+    },
+    "approve": {
+      "title": "Approve Task",
+      "description": "Are you sure you want to approve \"{{taskName}}\"?",
+      "confirm": "Approve"
+    },
     "unsaved": {
       "title": "Unsaved Changes",
       "description": "You have unsaved changes. Are you sure you want to leave? Your changes will be lost.",
@@ -72,6 +78,34 @@
     "noRole": "No Role"
   },
   "branding": {
-    "appName": "Image Transcription"
+    "appName": "Image Transcription V2"
+  },
+  "diffResolver": {
+    "workingArea": "Working Area",
+    "preview": "Preview",
+    "optionA": "Option A",
+    "optionB": "Option B",
+    "unresolvedCount": "{{count}} unresolved differences",
+    "allResolved": "All differences resolved",
+    "previewPlaceholder": "Resolved preview will appear here..."
+  },
+  "reviewer": {
+    "pendingAlignment": "Waiting for annotator comparison. The alignment diff will appear here once both annotations are ready.",
+    "noDiffsToResolve": "No differences to resolve. Both annotators agreed — review the transcript below and approve.",
+    "emptyTranscript": "No transcript available yet."
+  },
+  "shortcuts": {
+    "title": "Shortcuts",
+    "selectOptionA": "Select Option A",
+    "selectOptionB": "Select Option B",
+    "navigateDiffs": "Navigate between diffs"
+  },
+  "dictionary": {
+    "title": "Transcription Standards",
+    "toggleOpen": "Open transcription standards",
+    "toggleClose": "Close transcription standards",
+    "openExternal": "Open in new tab",
+    "loading": "Loading dictionary...",
+    "resize": "Resize dictionary panel"
   }
 }

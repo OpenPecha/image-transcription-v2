@@ -100,7 +100,15 @@ export const router = createBrowserRouter([
   {
     path: '/workspace',
     element: (
-      <ProtectedRoute allowedRoles={[UserRole.Annotator, UserRole.Reviewer, UserRole.FinalReviewer]}>
+      <ProtectedRoute
+        allowedRoles={[
+          UserRole.Annotator,
+          UserRole.Reviewer,
+          UserRole.FinalReviewer,
+          'reveiwer',
+          'final_reviewer',
+        ]}
+      >
         <Suspense fallback={fallback}><WorkspacePage /></Suspense>
       </ProtectedRoute>
     ),

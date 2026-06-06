@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { useGetApplicationBatchReport, useGetBatches } from '../../api/batch'
+import { APPLICATION_NAME } from '@/lib/constant'
 import { ApplicationBatchSummary } from './application-batch-summary'
 import { BatchItem, BatchItemSkeleton } from './batch-item'
 import { BatchUploadDialog } from './batch-upload-dialog'
@@ -17,7 +18,7 @@ export function BatchList() {
   const { t } = useTranslation('admin')
   const { data: batches = [], isLoading } = useGetBatches()
   const { data: applicationReports, isLoading: isApplicationReportLoading } =
-    useGetApplicationBatchReport('imagetranscription')
+    useGetApplicationBatchReport(APPLICATION_NAME)
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
 
   return (
@@ -43,13 +44,12 @@ export function BatchList() {
                 isLoading={true}
               />
             ) : (
-              applicationReports?.map((report) => (
+              applicationReports && (
                 <ApplicationBatchSummary
-                  key={report.id}
-                  report={report}
+                  report={applicationReports}
                   isLoading={false}
                 />
-              ))
+              )
             )}
           </div>
 

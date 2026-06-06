@@ -109,7 +109,7 @@ export function Sidebar() {
             </div>
             <div className="flex flex-col leading-tight">
               <span className="font-bold text-sidebar-foreground font-inter">Image</span>
-              <span className="text-xs text-sidebar-foreground/70 font-inter">Transcription</span>
+              <span className="text-xs text-sidebar-foreground/70 font-inter">Transcription V2</span>
             </div>
           </div>
         )}

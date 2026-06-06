@@ -52,6 +52,13 @@ interface UIState {
   // Workspace state
   unsavedChanges: boolean
   setUnsavedChanges: (hasChanges: boolean) => void
+
+  // Dictionary panel
+  dictionaryPanelOpen: boolean
+  dictionaryPanelWidth: number
+  toggleDictionaryPanel: () => void
+  setDictionaryPanelOpen: (open: boolean) => void
+  setDictionaryPanelWidth: (width: number) => void
 }
 
 let toastId = 0
@@ -100,6 +107,14 @@ export const useUIStore = create<UIState>()(
       // Workspace
       unsavedChanges: false,
       setUnsavedChanges: (hasChanges) => set({ unsavedChanges: hasChanges }),
+
+      // Dictionary panel
+      dictionaryPanelOpen: false,
+      dictionaryPanelWidth: 380,
+      toggleDictionaryPanel: () =>
+        set((state) => ({ dictionaryPanelOpen: !state.dictionaryPanelOpen })),
+      setDictionaryPanelOpen: (open) => set({ dictionaryPanelOpen: open }),
+      setDictionaryPanelWidth: (width) => set({ dictionaryPanelWidth: width }),
     }),
     {
       name: 'ui-storage',
@@ -109,6 +124,8 @@ export const useUIStore = create<UIState>()(
         language: state.language,
         editorFontFamily: state.editorFontFamily,
         editorFontSize: state.editorFontSize,
+        dictionaryPanelOpen: state.dictionaryPanelOpen,
+        dictionaryPanelWidth: state.dictionaryPanelWidth,
       }),
     }
   )
