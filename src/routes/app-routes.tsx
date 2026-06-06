@@ -105,8 +105,6 @@ export const router = createBrowserRouter([
           UserRole.Annotator,
           UserRole.Reviewer,
           UserRole.FinalReviewer,
-          'reveiwer',
-          'final_reviewer',
         ]}
       >
         <Suspense fallback={fallback}><WorkspacePage /></Suspense>
