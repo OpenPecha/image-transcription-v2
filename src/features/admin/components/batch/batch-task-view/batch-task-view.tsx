@@ -26,6 +26,7 @@ const STATE_OPTION_KEYS: Array<{ value: BatchTaskState | 'all'; key: string }> =
   { value: 'annotated', key: 'batches.states.annotated' },
   { value: 'half_reviewed', key: 'batches.states.half_reviewed' },
   { value: 'reviewed', key: 'batches.states.reviewed' },
+  { value: 'finalising', key: 'batches.states.finalising' },
   { value: 'finalised', key: 'batches.states.finalised' },
   { value: 'trashed', key: 'batches.states.trashed' },
 ]

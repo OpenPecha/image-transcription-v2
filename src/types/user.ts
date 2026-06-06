@@ -78,6 +78,41 @@ export function isLineAlignmentContribution(item: UserContribution): boolean {
   return item.line_count !== null
 }
 
+/** Maps API / legacy role strings to canonical UserRole values. */
+export function normalizeUserRole(
+  role: UserRole | string | undefined
+): UserRole | undefined {
+  if (role == null || role === '') return undefined
+
+  const key = String(role).toLowerCase().trim().replace(/_/g, ' ').replace(/\s+/g, ' ')
+
+  switch (key) {
+    case 'admin':
+      return UserRole.Admin
+    case 'annotator':
+      return UserRole.Annotator
+    case 'reviewer':
+    case 'reveiwer':
+      return UserRole.Reviewer
+    case 'final reviewer':
+      return UserRole.FinalReviewer
+    default:
+      if (Object.values(UserRole).includes(role as UserRole)) {
+        return role as UserRole
+      }
+      return undefined
+  }
+}
+
+export function isUserRoleAllowed(
+  userRole: UserRole | string | undefined,
+  allowedRoles: readonly (UserRole | string)[]
+): boolean {
+  const normalized = normalizeUserRole(userRole)
+  if (!normalized) return false
+  return allowedRoles.some((allowed) => normalizeUserRole(allowed) === normalized)
+}
+
 // User contribution filters
 export interface UserContributionFilters {
   start_date: string

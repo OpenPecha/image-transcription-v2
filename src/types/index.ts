@@ -1,5 +1,11 @@
 // User types
-export { UserRole, ROLE_CONFIG, isLineAlignmentContribution } from './user'
+export {
+  UserRole,
+  ROLE_CONFIG,
+  isLineAlignmentContribution,
+  normalizeUserRole,
+  isUserRoleAllowed,
+} from './user'
 export type * from './user'
 
 // Task types
@@ -9,6 +15,8 @@ export {
   STATUS_CONFIG,
   VALID_TRANSITIONS,
   ITV2_EDITABLE_TASK_STATES,
+  ITV2_REVIEWER_APPROVABLE_STATES,
+  ITV2_FINAL_REVIEWER_APPROVABLE_STATES,
   isEditableTaskState,
   isAnnotatorATaskState,
   isAnnotatorBTaskState,

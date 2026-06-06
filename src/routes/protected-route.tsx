@@ -1,7 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/features/auth'
 import { LoadingSpinner } from '@/components/common'
-import type { UserRole } from '@/types'
+import { isUserRoleAllowed, type UserRole } from '@/types'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -28,7 +28,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return <Navigate to="/pending-approval" replace />
   }
 
-  if (allowedRoles && !allowedRoles.includes(currentUser.role)) {
+  if (allowedRoles && !isUserRoleAllowed(currentUser.role, allowedRoles)) {
     return <Navigate to="/dashboard" replace />
   }
 

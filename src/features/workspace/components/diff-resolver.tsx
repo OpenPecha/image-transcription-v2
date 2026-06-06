@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check, ChevronDown } from 'lucide-react'
 import {
@@ -6,6 +6,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuShortcut,
 } from '@/components/ui/dropdown-menu'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
@@ -30,69 +31,107 @@ export function DiffResolver({
 }: DiffResolverProps) {
   const { t } = useTranslation('workspace')
   const pillRefs = useRef<Map<number, HTMLButtonElement>>(new Map())
+  const [openDiffId, setOpenDiffId] = useState<number | null>(null)
 
-  // Get all diff segments in order to support navigation
   const diffSegments = segments.filter((seg): seg is DiffSegment => seg.type === 'diff')
   const unresolvedCount = diffSegments.filter((seg) => seg.selected === null).length
 
-  const handlePillKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLButtonElement>, diffId: number) => {
+  const focusDiff = useCallback(
+    (diffId: number) => {
+      setTimeout(() => {
+        pillRefs.current.get(diffId)?.focus()
+      }, 50)
+    },
+    []
+  )
+
+  const navigateBetweenDiffs = useCallback(
+    (currentDiffId: number, direction: 'prev' | 'next', options?: { keepOpen?: boolean }) => {
       const diffIds = diffSegments.map((seg) => seg.id)
-      const currentIndex = diffIds.indexOf(diffId)
+      const currentIndex = diffIds.indexOf(currentDiffId)
       if (currentIndex === -1) return
 
-      if (e.key === 'Tab' && !e.shiftKey) {
-        e.preventDefault()
-        const nextId = diffIds[(currentIndex + 1) % diffIds.length]
-        if (nextId !== undefined) {
-          pillRefs.current.get(nextId)?.focus()
-        }
-      } else if (e.key === 'Tab' && e.shiftKey) {
-        e.preventDefault()
-        const prevId = diffIds[(currentIndex - 1 + diffIds.length) % diffIds.length]
-        if (prevId !== undefined) {
-          pillRefs.current.get(prevId)?.focus()
-        }
-      } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-        e.preventDefault()
-        const nextId = diffIds[(currentIndex + 1) % diffIds.length]
-        if (nextId !== undefined) {
-          pillRefs.current.get(nextId)?.focus()
-        }
-      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-        e.preventDefault()
-        const prevId = diffIds[(currentIndex - 1 + diffIds.length) % diffIds.length]
-        if (prevId !== undefined) {
-          pillRefs.current.get(prevId)?.focus()
-        }
-      } else if (e.key === '1') {
-        e.preventDefault()
-        onSelectDiff(diffId, 's1')
-        const nextId = diffIds[(currentIndex + 1) % diffIds.length]
-        if (nextId !== undefined) {
-          setTimeout(() => {
-            pillRefs.current.get(nextId)?.focus()
-          }, 50)
-        }
-      } else if (e.key === '2') {
-        e.preventDefault()
-        onSelectDiff(diffId, 's2')
-        const nextId = diffIds[(currentIndex + 1) % diffIds.length]
-        if (nextId !== undefined) {
-          setTimeout(() => {
-            pillRefs.current.get(nextId)?.focus()
-          }, 50)
-        }
+      const targetId =
+        direction === 'next'
+          ? diffIds[(currentIndex + 1) % diffIds.length]
+          : diffIds[(currentIndex - 1 + diffIds.length) % diffIds.length]
+
+      if (targetId === undefined) return
+
+      if (options?.keepOpen) {
+        setOpenDiffId(targetId)
+      } else {
+        setOpenDiffId(null)
+      }
+
+      setTimeout(() => {
+        pillRefs.current.get(targetId)?.focus()
+      }, 50)
+    },
+    [diffSegments]
+  )
+
+  const selectDiff = useCallback(
+    (diffId: number, choice: 's1' | 's2', options?: { keepOpen?: boolean }) => {
+      onSelectDiff(diffId, choice)
+      if (options?.keepOpen) {
+        setOpenDiffId(diffId)
+      } else {
+        setOpenDiffId(null)
+        focusDiff(diffId)
       }
     },
-    [diffSegments, onSelectDiff]
+    [onSelectDiff, focusDiff]
+  )
+
+  const handlePillKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLButtonElement>, diffId: number) => {
+      if (e.key === 'Tab' && !e.shiftKey) {
+        e.preventDefault()
+        navigateBetweenDiffs(diffId, 'next')
+      } else if (e.key === 'Tab' && e.shiftKey) {
+        e.preventDefault()
+        navigateBetweenDiffs(diffId, 'prev')
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        navigateBetweenDiffs(diffId, 'next')
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        navigateBetweenDiffs(diffId, 'prev')
+      } else if (e.key === 'ArrowUp' || e.key === '1') {
+        e.preventDefault()
+        selectDiff(diffId, 's1', { keepOpen: true })
+      } else if (e.key === 'ArrowDown' || e.key === '2') {
+        e.preventDefault()
+        selectDiff(diffId, 's2', { keepOpen: true })
+      }
+    },
+    [selectDiff, navigateBetweenDiffs]
+  )
+
+  const handleMenuKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>, diffId: number) => {
+      if (e.key === '1' || e.key === 'ArrowUp') {
+        e.preventDefault()
+        selectDiff(diffId, 's1', { keepOpen: true })
+      } else if (e.key === '2' || e.key === 'ArrowDown') {
+        e.preventDefault()
+        selectDiff(diffId, 's2', { keepOpen: true })
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        navigateBetweenDiffs(diffId, 'next', { keepOpen: true })
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        navigateBetweenDiffs(diffId, 'prev', { keepOpen: true })
+      }
+    },
+    [selectDiff, navigateBetweenDiffs]
   )
 
   const resolvedFontFamily = FONT_FAMILY_MAP[fontFamily]
 
   return (
     <Tabs defaultValue="working" className="flex-1 flex flex-col h-full overflow-hidden bg-card">
-      {/* Tabs Header bar */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card/60 shrink-0">
         <TabsList className="bg-muted/80">
           <TabsTrigger value="working" className="text-xs">
@@ -103,7 +142,6 @@ export function DiffResolver({
           </TabsTrigger>
         </TabsList>
 
-        {/* Unresolved Count / All Resolved Indicator */}
         <div className="text-xs font-semibold select-none">
           {unresolvedCount > 0 ? (
             <span className="text-amber-700 dark:text-amber-400 bg-amber-100/60 dark:bg-amber-950/40 px-2.5 py-1 rounded-full border border-amber-200/50 dark:border-amber-900/50">
@@ -118,7 +156,6 @@ export function DiffResolver({
         </div>
       </div>
 
-      {/* Working Area Tab */}
       <TabsContent
         value="working"
         className="flex-1 flex flex-col min-h-0 m-0 border-none outline-none overflow-hidden"
@@ -144,7 +181,11 @@ export function DiffResolver({
             const displayText = seg.selected ? seg[seg.selected] : '?'
 
             return (
-              <DropdownMenu key={`diff-${seg.id}`}>
+              <DropdownMenu
+                key={`diff-${seg.id}`}
+                open={openDiffId === seg.id}
+                onOpenChange={(open) => setOpenDiffId(open ? seg.id : null)}
+              >
                 <DropdownMenuTrigger asChild>
                   <button
                     ref={(el) => {
@@ -173,24 +214,40 @@ export function DiffResolver({
                     <ChevronDown className="h-3.5 w-3.5 opacity-60 shrink-0" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="min-w-[220px] shadow-lg">
+                <DropdownMenuContent
+                  align="start"
+                  className="min-w-[220px] shadow-lg"
+                  onKeyDown={(e) => handleMenuKeyDown(e, seg.id)}
+                >
                   <DropdownMenuItem
-                    onSelect={() => onSelectDiff(seg.id, 's1')}
+                    onSelect={(e) => {
+                      e.preventDefault()
+                      selectDiff(seg.id, 's1', { keepOpen: true })
+                    }}
                     className="flex items-center justify-between gap-4 cursor-pointer py-2 px-3"
                   >
                     <span className="flex-1 text-left truncate" style={{ fontFamily: resolvedFontFamily }}>
                       {t('diffResolver.optionA')}: {seg.s1}
                     </span>
-                    {seg.selected === 's1' && <Check className="h-4 w-4 shrink-0 text-emerald-600" />}
+                    <div className="flex items-center gap-2 shrink-0">
+                      {seg.selected === 's1' && <Check className="h-4 w-4 text-emerald-600" />}
+                      <DropdownMenuShortcut>1 / ↑</DropdownMenuShortcut>
+                    </div>
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onSelect={() => onSelectDiff(seg.id, 's2')}
+                    onSelect={(e) => {
+                      e.preventDefault()
+                      selectDiff(seg.id, 's2', { keepOpen: true })
+                    }}
                     className="flex items-center justify-between gap-4 cursor-pointer py-2 px-3"
                   >
                     <span className="flex-1 text-left truncate" style={{ fontFamily: resolvedFontFamily }}>
                       {t('diffResolver.optionB')}: {seg.s2}
                     </span>
-                    {seg.selected === 's2' && <Check className="h-4 w-4 shrink-0 text-emerald-600" />}
+                    <div className="flex items-center gap-2 shrink-0">
+                      {seg.selected === 's2' && <Check className="h-4 w-4 text-emerald-600" />}
+                      <DropdownMenuShortcut>2 / ↓</DropdownMenuShortcut>
+                    </div>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -199,7 +256,6 @@ export function DiffResolver({
         </div>
       </TabsContent>
 
-      {/* Preview Tab */}
       <TabsContent
         value="preview"
         className="flex-1 flex flex-col min-h-0 m-0 border-none outline-none overflow-hidden"

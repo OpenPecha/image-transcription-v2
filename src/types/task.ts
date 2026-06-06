@@ -102,6 +102,7 @@ export type AssignedTaskState =
   | 'half_reviewed'
   | 'reviewing_b'
   | 'reviewed'
+  | 'finalising'
   | 'finalised'
   | 'trashed'
 
@@ -110,6 +111,17 @@ export const ITV2_EDITABLE_TASK_STATES = [
   'annotating_b',
   'reviewing',
   'reviewing_b',
+] as const satisfies readonly AssignedTaskState[]
+
+/** Reviewer A/B slots — approve/submit is allowed only in these states. */
+export const ITV2_REVIEWER_APPROVABLE_STATES = [
+  'reviewing',
+  'reviewing_b',
+] as const satisfies readonly AssignedTaskState[]
+
+/** Final Reviewer slot — approve/submit is allowed only in this state. */
+export const ITV2_FINAL_REVIEWER_APPROVABLE_STATES = [
+  'finalising',
 ] as const satisfies readonly AssignedTaskState[]
 
 export function isEditableTaskState(state: AssignedTaskState): boolean {

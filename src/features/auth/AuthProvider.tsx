@@ -8,7 +8,7 @@ import React, {
 import { Auth0Provider, useAuth0 } from '@auth0/auth0-react'
 import { setAuthTokenGetter } from '@/lib/auth'
 import { AuthContext } from './auth-context'
-import { UserRole } from '@/types'
+import { UserRole, normalizeUserRole } from '@/types'
 import type { User } from '@/types'
 import { apiClient } from '@/lib/axios'
 import { useQuery } from '@tanstack/react-query'
@@ -33,8 +33,8 @@ function getEmailIdentifierOverride(): string | null {
 async function getUserDetails(email: string): Promise<User> {
   const date = new Date().toISOString()
   const user = (await apiClient.get(`/user/by-identifier/${email}?date=${date}`)) as User
-  if (user && (user.role as string) === 'reveiwer') {
-    user.role = UserRole.Reviewer
+  if (user?.role) {
+    user.role = normalizeUserRole(user.role) ?? user.role
   }
   return user
 }
@@ -168,11 +168,24 @@ const DevAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const emailParam = params.get('email')
     const roleParam = params.get('role')
 
+    let devRole: UserRole = UserRole.Annotator
+    if (roleParam === 'reviewer' || roleParam === 'reveiwer') {
+      devRole = UserRole.Reviewer
+    } else if (roleParam === 'final_reviewer' || roleParam === 'final reviewer') {
+      devRole = UserRole.FinalReviewer
+    } else if (roleParam === 'admin') {
+      devRole = UserRole.Admin
+    } else if (roleParam === 'annotator') {
+      devRole = UserRole.Annotator
+    } else if (roleParam) {
+      devRole = roleParam as UserRole
+    }
+
     let devUser: User = {
       id: idParam || 'u2',
       username: usernameParam || 'Pema Lhamo',
       email: emailParam || 'pema@example.com',
-      role: (roleParam as UserRole) || UserRole.Annotator,
+      role: devRole,
       group_id: 'g1',
     }
 

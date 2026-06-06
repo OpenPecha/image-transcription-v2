@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Eraser, Type, ALargeSmall, RotateCcw, GitCompare, PenLine } from 'lucide-react'
+import { Type, ALargeSmall, RotateCcw, GitCompare, PenLine, Keyboard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -15,35 +15,37 @@ import { useUIStore, type EditorFontFamily, type EditorFontSize } from '@/store/
 import { FONT_FAMILIES, FONT_SIZES } from './constant'
 
 type EditorToolbarProps = {
-  onClear: () => void
   onRestoreOriginal: () => void
-  hasContent: boolean
   hasOriginalContent: boolean
   isDisabled?: boolean
-  // Diff view props — only used for reviewer role
+  showDiffShortcuts?: boolean
   showDiff?: boolean
   onToggleDiff?: () => void
   canShowDiff?: boolean
 }
 
+function ShortcutHint({ keys, label }: { keys: string; label: string }) {
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-[11px] text-muted-foreground">
+      <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-foreground">
+        {keys}
+      </kbd>
+      <span>{label}</span>
+    </span>
+  )
+}
+
 export function EditorToolbar({
-  onClear,
   onRestoreOriginal,
-  hasContent,
   hasOriginalContent,
   isDisabled = false,
+  showDiffShortcuts = false,
   showDiff = false,
   onToggleDiff,
   canShowDiff = false,
 }: EditorToolbarProps) {
   const { t } = useTranslation('workspace')
-  const {
-    editorFontFamily,
-    editorFontSize,
-    setEditorFontFamily,
-    setEditorFontSize,
-    addToast,
-  } = useUIStore()
+  const { editorFontFamily, editorFontSize, setEditorFontFamily, setEditorFontSize } = useUIStore()
 
   const handleFontFamilyChange = useCallback(
     (value: string) => {
@@ -54,35 +56,15 @@ export function EditorToolbar({
 
   const handleFontSizeChange = useCallback(
     (value: string) => {
-      console.log('value', value)
       setEditorFontSize(Number(value) as EditorFontSize)
     },
     [setEditorFontSize]
   )
 
-  const handleClear = useCallback(() => {
-    // Trigger the clear action
-    onClear()
-
-    // Show toast with undo option
-    addToast({
-      title: t('editor.cleared'),
-      description: t('editor.clearedDescription'),
-      variant: 'default',
-      action: {
-        label: t('editor.undo'),
-        onClick: () => {
-          onRestoreOriginal()
-        },
-      },
-    })
-  }, [onClear, onRestoreOriginal, addToast, t])
-
   const currentFontLabel = FONT_FAMILIES.find((f) => f.value === editorFontFamily)?.label ?? 'Monlam'
 
   return (
     <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border-b border-border">
-      {/* Font Family Selector */}
       <div className="flex items-center gap-2">
         <Type className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
         <Select
@@ -95,7 +77,7 @@ export function EditorToolbar({
             aria-label="Select font family"
           >
             <SelectValue placeholder="Font">
-              <span className={cn("text-xs", FONT_FAMILIES.find(f => f.value === editorFontFamily)?.fontClass)}>
+              <span className={cn('text-xs', FONT_FAMILIES.find((f) => f.value === editorFontFamily)?.fontClass)}>
                 {currentFontLabel}
               </span>
             </SelectValue>
@@ -114,7 +96,6 @@ export function EditorToolbar({
         </Select>
       </div>
 
-      {/* Font Size Selector */}
       <div className="flex items-center gap-2">
         <ALargeSmall className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
         <Select
@@ -138,10 +119,8 @@ export function EditorToolbar({
         </Select>
       </div>
 
-      {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Compare / Edit toggle — reviewer only */}
       {canShowDiff && onToggleDiff && (
         <>
           <Button
@@ -173,7 +152,6 @@ export function EditorToolbar({
         </>
       )}
 
-      {/* Restore Original Button — hidden when in diff mode */}
       {hasOriginalContent && !showDiff && (
         <>
           <Button
@@ -191,24 +169,22 @@ export function EditorToolbar({
         </>
       )}
 
-      {/* Clear Button — hidden when in diff mode */}
-      {!showDiff && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleClear}
-          disabled={isDisabled || !hasContent}
-          className={cn(
-            'h-8 px-3 text-xs transition-colors',
-            hasContent
-              ? 'text-muted-foreground hover:text-destructive hover:bg-destructive/10'
-              : 'text-muted-foreground/50'
-          )}
-          aria-label={t('editor.clear')}
+      {showDiffShortcuts && (
+        <div
+          className="flex shrink-0 items-center gap-2.5"
+          aria-label={t('shortcuts.title')}
         >
-          <Eraser className="h-3.5 w-3.5 mr-1.5" />
-          {t('editor.clear')}
-        </Button>
+          <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-muted-foreground whitespace-nowrap">
+            <Keyboard className="h-3.5 w-3.5" aria-hidden="true" />
+            {t('shortcuts.title')}
+          </span>
+          <Separator orientation="vertical" className="h-4" />
+          <ShortcutHint keys="1 / ↑" label={t('shortcuts.selectOptionA')} />
+          <Separator orientation="vertical" className="h-4" />
+          <ShortcutHint keys="2 / ↓" label={t('shortcuts.selectOptionB')} />
+          <Separator orientation="vertical" className="h-4" />
+          <ShortcutHint keys="← → / Tab" label={t('shortcuts.navigateDiffs')} />
+        </div>
       )}
     </div>
   )

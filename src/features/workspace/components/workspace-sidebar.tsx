@@ -29,6 +29,7 @@ const getStateColor = (state: string): string => {
     case 'annotated':
       return 'text-warning fill-warning'
     case 'reviewed':
+    case 'finalising':
     case 'finalised':
       return 'text-success fill-success'
     case 'trashed':

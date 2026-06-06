@@ -1,13 +1,16 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { GripHorizontal, GripVertical, Send, Trash2 } from 'lucide-react'
 import { ImageCanvas } from './image-canvas'
 import { WorkspaceSidebar } from './workspace-sidebar'
 import { TrashConfirmationDialog } from './trash-confirmation-dialog'
+import { TaskConfirmationDialog } from './task-confirmation-dialog'
 import { EditorOverlay } from './editor-overlay'
 import { EditorToolbar } from './editor-toolbar'
 import { EmptyTasksState } from './empty-tasks-state'
 import { DiffResolver } from './diff-resolver'
+import { ReviewerNoDiffPanel } from './reviewer-no-diff-panel'
+import { LookupDictionaryPanel } from './lookup-dictionary-panel'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/features/auth'
@@ -30,20 +33,36 @@ import {
   useApproveTask,
 } from '../api'
 import { loadNonEmptyTextDraft, useLocalDraft } from '../hooks'
+import {
+  getWorkspaceRoleCaps,
+  isAnnotatorRole,
+  isApprovableTaskState,
+} from '../workspace-role-config'
 import { cn } from '@/lib/utils'
 import {
-  UserRole,
   isEditableTaskState,
   canAnnotatorTrashTask,
   getAnnotatorBaselineTranscript,
 } from '@/types'
 
-function isReviewerRole(role: UserRole | string | undefined): boolean {
-  return role === UserRole.Reviewer || role === 'reveiwer'
+function WorkspaceMainShell({
+  dictionaryEnabled,
+  children,
+}: {
+  dictionaryEnabled: boolean
+  children: ReactNode
+}) {
+  return (
+    <main className="ml-60 flex min-h-0 flex-1 overflow-hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>
+      <LookupDictionaryPanel enabled={dictionaryEnabled} />
+    </main>
+  )
 }
 
 export function WorkspaceEditor() {
   const { t } = useTranslation('workspace')
+  const { t: tCommon } = useTranslation('common')
   const { currentUser } = useAuth()
   const { addToast, editorFontFamily, editorFontSize } = useUIStore()
 
@@ -52,6 +71,8 @@ export function WorkspaceEditor() {
   const [splitPosition, setSplitPosition] = useState(55)
   const [isDragging, setIsDragging] = useState(false)
   const [trashDialogOpen, setTrashDialogOpen] = useState(false)
+  const [submitDialogOpen, setSubmitDialogOpen] = useState(false)
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false)
   const [segments, setSegments] = useState<Segment[]>([])
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -67,24 +88,39 @@ export function WorkspaceEditor() {
   const trashTask = useTrashTask(currentUser?.id)
   const approveTask = useApproveTask(currentUser?.id)
 
-  const isReviewer = isReviewerRole(currentUser?.role)
-  const isAnnotator = currentUser?.role === UserRole.Annotator
+  const roleCaps = getWorkspaceRoleCaps(currentUser?.role)
+  const isAnnotator = isAnnotatorRole(currentUser?.role)
+  const dictionaryEnabled = roleCaps?.dictionaryEnabled ?? false
+  const usesReviewerTranscript = roleCaps?.usesReviewerTranscript ?? false
+  const usesApproveAction = roleCaps?.usesApproveAction ?? false
   const canTrash = isAnnotator && task ? canAnnotatorTrashTask(task.state) : false
-  const hasDiffs =
-    isReviewer && (task?.task_transcript?.includes('<t-diff') ?? false)
+  const hasDiffSegments = segments.some((seg) => seg.type === 'diff')
+  const hasDiffs = (roleCaps?.usesDiffResolver ?? false) && hasDiffSegments
+  const isReviewerNoDiffs = usesReviewerTranscript && !hasDiffs
   const resolvedText = useMemo(() => resolveSegments(segments), [segments])
 
   const { clearDraft } = useLocalDraft({
     taskId: task?.task_id ?? null,
     text,
     delay: 500,
-    enabled: !hasDiffs,
+    enabled: !hasDiffs && !usesReviewerTranscript,
   })
 
   const canEdit = task ? isEditableTaskState(task.state) : false
+  const canActOnTask = task
+    ? usesApproveAction
+      ? isApprovableTaskState(task.state, currentUser?.role)
+      : isEditableTaskState(task.state)
+    : false
   const isMutating = submitTask.isPending || trashTask.isPending || approveTask.isPending
   const isLoadingNextTask = isFetching && !isLoading
   const showOverlay = isLoadingNextTask || isMutating
+
+  const canApprove = useMemo(() => {
+    if (!usesApproveAction || !canActOnTask || isMutating) return false
+    if (!hasDiffSegments) return true
+    return allDiffsResolved(segments)
+  }, [usesApproveAction, canActOnTask, isMutating, hasDiffSegments, segments])
 
   const transcriptForSubmit = hasDiffs ? resolvedText : text
 
@@ -97,12 +133,13 @@ export function WorkspaceEditor() {
       return
     }
 
-    const transcript = isReviewer
+    const transcript = usesReviewerTranscript
       ? (task.task_transcript ?? '')
       : getAnnotatorBaselineTranscript(task)
 
     const parsed = parseTDiff(transcript)
-    const containsDiffs = isReviewer && parsed.some((seg) => seg.type === 'diff')
+    const containsDiffs =
+      (roleCaps?.usesDiffResolver ?? false) && parsed.some((seg) => seg.type === 'diff')
 
     let nextSegments = parsed
     if (containsDiffs) {
@@ -117,13 +154,20 @@ export function WorkspaceEditor() {
 
     if (containsDiffs) {
       setText(resolveSegments(nextSegments))
-    } else if (!isReviewer) {
+    } else if (usesReviewerTranscript) {
+      setText(transcript)
+    } else {
       const draft = loadNonEmptyTextDraft(task.task_id)
       setText(draft ?? transcript)
-    } else {
-      setText('')
     }
-  }, [task?.task_id, task?.task_transcript, task?.initial_transcript, task?.state, isReviewer])
+  }, [
+    task?.task_id,
+    task?.task_transcript,
+    task?.initial_transcript,
+    task?.state,
+    usesReviewerTranscript,
+    roleCaps?.usesDiffResolver,
+  ])
 
   // Reset split position when image orientation changes
   useEffect(() => {
@@ -131,10 +175,6 @@ export function WorkspaceEditor() {
       setSplitPosition(50)
     }
   }, [task?.orientation])
-
-  const handleClear = useCallback(() => {
-    setText('')
-  }, [])
 
   const handleRestoreOriginal = useCallback(() => {
     setText(originalOcrText)
@@ -170,6 +210,7 @@ export function WorkspaceEditor() {
       {
         onSuccess: () => {
           clearAllDrafts()
+          setSubmitDialogOpen(false)
           addToast({
             title: t('toast.submitted'),
             description: t('toast.submittedDescription'),
@@ -222,6 +263,7 @@ export function WorkspaceEditor() {
       {
         onSuccess: () => {
           clearAllDrafts()
+          setApproveDialogOpen(false)
           addToast({
             title: t('toast.approved'),
             description: t('toast.approvedDescription'),
@@ -272,11 +314,11 @@ export function WorkspaceEditor() {
           onRefresh={() => refetch()}
           isLoading={true}
         />
-        <main className="flex-1 ml-60 flex flex-col">
-          <div className="flex-1 flex items-center justify-center">
-            <Skeleton className="h-full w-full m-4 rounded-lg" />
+        <WorkspaceMainShell dictionaryEnabled={dictionaryEnabled}>
+          <div className="flex flex-1 items-center justify-center">
+            <Skeleton className="m-4 h-full w-full rounded-lg" />
           </div>
-        </main>
+        </WorkspaceMainShell>
       </div>
     )
   }
@@ -293,13 +335,13 @@ export function WorkspaceEditor() {
           onRefresh={() => refetch()}
           isLoading={isLoading || isFetching}
         />
-        <main className="flex-1 ml-60">
+        <WorkspaceMainShell dictionaryEnabled={dictionaryEnabled}>
           <EmptyTasksState
             onRefresh={() => refetch()}
             isLoading={isLoading}
             message={noApplicationMessage}
           />
-        </main>
+        </WorkspaceMainShell>
       </div>
     )
   }
@@ -312,10 +354,10 @@ export function WorkspaceEditor() {
         isLoading={isFetching}
       />
 
-      <main className="flex-1 ml-60 flex flex-col">
+      <WorkspaceMainShell dictionaryEnabled={dictionaryEnabled}>
         <div
           className={cn(
-            'relative flex-1 flex overflow-hidden',
+            'relative flex flex-1 overflow-hidden',
             isHorizontalLayout ? 'flex-row' : 'flex-col'
           )}
           onMouseMove={handleMouseMove}
@@ -365,13 +407,12 @@ export function WorkspaceEditor() {
             )}
           >
             <EditorToolbar
-              onClear={handleClear}
               onRestoreOriginal={handleRestoreOriginal}
-              hasContent={isAnnotator && !hasDiffs && text.length > 0}
               hasOriginalContent={
                 isAnnotator && !hasDiffs && originalOcrText.length > 0 && text !== originalOcrText
               }
               isDisabled={!canEdit || showOverlay}
+              showDiffShortcuts={hasDiffs}
             />
 
             {hasDiffs ? (
@@ -382,12 +423,12 @@ export function WorkspaceEditor() {
                 fontFamily={editorFontFamily}
                 fontSize={editorFontSize}
               />
-            ) : isReviewer ? (
-              <div className="flex flex-1 items-center justify-center p-8 text-center bg-card">
-                <p className="max-w-md text-sm text-muted-foreground">
-                  {t('reviewer.pendingAlignment')}
-                </p>
-              </div>
+            ) : isReviewerNoDiffs ? (
+              <ReviewerNoDiffPanel
+                transcript={text}
+                fontFamily={editorFontFamily}
+                fontSize={editorFontSize}
+              />
             ) : (
               <textarea
                 id="editor-textarea"
@@ -423,7 +464,7 @@ export function WorkspaceEditor() {
               <>
                 <Button
                   variant="success"
-                  onClick={handleSubmit}
+                  onClick={() => setSubmitDialogOpen(true)}
                   disabled={showOverlay || !canEdit}
                 >
                   <Send className="h-4 w-4 mr-2" />
@@ -442,15 +483,11 @@ export function WorkspaceEditor() {
               </>
             )}
 
-            {isReviewer && (
+            {usesApproveAction && (
               <Button
                 variant="success"
-                onClick={handleApprove}
-                disabled={
-                  showOverlay ||
-                  !canEdit ||
-                  (hasDiffs && !allDiffsResolved(segments))
-                }
+                onClick={() => setApproveDialogOpen(true)}
+                disabled={!canApprove}
               >
                 <Send className="h-4 w-4 mr-2" />
                 {approveTask.isPending ? t('actions.approving') : t('actions.approve')}
@@ -460,7 +497,7 @@ export function WorkspaceEditor() {
 
           <div className="flex justify-end" />
         </footer>
-      </main>
+      </WorkspaceMainShell>
 
       <TrashConfirmationDialog
         open={trashDialogOpen}
@@ -469,6 +506,36 @@ export function WorkspaceEditor() {
         onCancel={() => setTrashDialogOpen(false)}
         isLoading={trashTask.isPending}
         taskName={task.task_name}
+      />
+
+      <TaskConfirmationDialog
+        open={submitDialogOpen}
+        onOpenChange={setSubmitDialogOpen}
+        onConfirm={handleSubmit}
+        onCancel={() => setSubmitDialogOpen(false)}
+        isLoading={submitTask.isPending}
+        title={t('dialogs.submit.title')}
+        description={t('dialogs.submit.description', { taskName: task.task_name })}
+        confirmLabel={t('dialogs.submit.confirm')}
+        cancelLabel={tCommon('actions.cancel')}
+        loadingLabel={t('loading.processing')}
+        variant="success"
+        icon={Send}
+      />
+
+      <TaskConfirmationDialog
+        open={approveDialogOpen}
+        onOpenChange={setApproveDialogOpen}
+        onConfirm={handleApprove}
+        onCancel={() => setApproveDialogOpen(false)}
+        isLoading={approveTask.isPending}
+        title={t('dialogs.approve.title')}
+        description={t('dialogs.approve.description', { taskName: task.task_name })}
+        confirmLabel={t('dialogs.approve.confirm')}
+        cancelLabel={tCommon('actions.cancel')}
+        loadingLabel={t('loading.processing')}
+        variant="success"
+        icon={Send}
       />
     </div>
   )

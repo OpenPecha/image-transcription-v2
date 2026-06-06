@@ -111,6 +111,7 @@
       "annotated": "Annotated",
       "half_reviewed": "Half Reviewed",
       "reviewed": "Reviewed",
+      "finalising": "Finalising",
       "finalised": "Finalised",
       "trashed": "Trashed"
     },

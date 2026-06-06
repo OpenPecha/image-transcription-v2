@@ -42,6 +42,7 @@ export type BatchTaskState =
   | 'annotated'
   | 'half_reviewed'
   | 'reviewed'
+  | 'finalising'
   | 'finalised'
   | 'trashed'
 
@@ -64,6 +65,7 @@ export interface BatchReport extends Batch {
   annotated: number
   half_reviewed: number
   reviewed: number
+  finalising: number
   finalised: number
   trashed: number
 }
@@ -79,6 +81,7 @@ export type ApplicationBatchReport = {
   annotated: number
   half_reviewed: number
   reviewed: number
+  finalising: number
   finalised: number
   trashed: number
 }
@@ -135,19 +138,26 @@ export const BATCH_STATS_CONFIG = {
     textColor: 'text-white',
     order: 4,
   },
+  finalising: {
+    label: 'Finalising',
+    color: 'bg-violet-100 text-violet-700',
+    barColor: 'bg-violet-500',
+    textColor: 'text-white',
+    order: 5,
+  },
   finalised: {
     label: 'Finalised',
     color: 'bg-emerald-100 text-emerald-700',
     barColor: 'bg-emerald-500',
     textColor: 'text-white',
-    order: 5,
+    order: 6,
   },
   trashed: {
     label: 'Trashed',
     color: 'bg-red-100 text-red-700',
     barColor: 'bg-rose-500',
     textColor: 'text-white',
-    order: 6,
+    order: 7,
     isHatched: true,
   },
 } as const
@@ -161,6 +171,7 @@ export const WORKFLOW_STATS: BatchStatKey[] = [
   'annotated',
   'half_reviewed',
   'reviewed',
+  'finalising',
   'finalised',
 ]
 
