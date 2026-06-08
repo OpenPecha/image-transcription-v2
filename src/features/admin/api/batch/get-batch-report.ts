@@ -16,4 +16,3 @@ export const useGetBatchReport = (batchId: string, enabled: boolean = true) => {
     enabled: enabled && !!batchId,
   })
 }
-

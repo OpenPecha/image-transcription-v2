@@ -10,7 +10,8 @@ export const batchKeys = {
   applicationReports: () => [...batchKeys.all, 'application-report'] as const,
   applicationReport: (applicationName: string) =>
     [...batchKeys.applicationReports(), applicationName] as const,
-  tasks: (batchId: string, state?: string) => 
-    [...batchKeys.all, 'tasks', batchId, state] as const,
+  tasks: (batchId: string, filter?: { state?: string; userId?: string }) =>
+    [...batchKeys.all, 'tasks', batchId, filter?.state ?? 'all', filter?.userId ?? 'all'] as const,
+  groupUsers: (batchId: string) => [...batchKeys.all, 'group-users', batchId] as const,
 }
 
