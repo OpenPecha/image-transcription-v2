@@ -25,6 +25,7 @@ import {
   saveDiffDraftSelections,
   clearDiffDraft,
   type Segment,
+  type DiffSelection,
 } from '../utils/parse-tdiff'
 import {
   useGetAssignedTask,
@@ -187,11 +188,28 @@ export function WorkspaceEditor() {
     }
   }, [clearDraft, task])
 
-  const handleSelectDiff = useCallback(
-    (diffId: number, choice: 's1' | 's2') => {
+  const handleResolveDiff = useCallback(
+    (diffId: number, selected: DiffSelection) => {
       setSegments((prev) => {
         const next = prev.map((seg) =>
-          seg.type === 'diff' && seg.id === diffId ? { ...seg, selected: choice } : seg
+          seg.type === 'diff' && seg.id === diffId ? { ...seg, selected } : seg
+        )
+        if (task) {
+          saveDiffDraftSelections(task.task_id, next)
+        }
+        return next
+      })
+    },
+    [task]
+  )
+
+  const handleUpdateCustomDraft = useCallback(
+    (diffId: number, value: string) => {
+      setSegments((prev) => {
+        const next = prev.map((seg) =>
+          seg.type === 'diff' && seg.id === diffId
+            ? { ...seg, customDraft: value, selected: { kind: 'custom' as const, value } }
+            : seg
         )
         if (task) {
           saveDiffDraftSelections(task.task_id, next)
@@ -417,8 +435,10 @@ export function WorkspaceEditor() {
 
             {hasDiffs ? (
               <DiffResolver
+                key={task.task_id}
                 segments={segments}
-                onSelectDiff={handleSelectDiff}
+                onResolveDiff={handleResolveDiff}
+                onUpdateCustomDraft={handleUpdateCustomDraft}
                 resolvedText={resolvedText}
                 fontFamily={editorFontFamily}
                 fontSize={editorFontSize}

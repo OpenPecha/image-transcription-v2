@@ -8,42 +8,50 @@ import {
   DropdownMenuItem,
   DropdownMenuShortcut,
 } from '@/components/ui/dropdown-menu'
+import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
-import type { Segment, DiffSegment } from '../utils/parse-tdiff'
+import type { DiffSelection, Segment, DiffSegment } from '../utils/parse-tdiff'
+import { getDiffResolvedValue, isDiffResolved } from '../utils/parse-tdiff'
 import { FONT_FAMILY_MAP } from './constant'
 import type { EditorFontFamily } from '@/store/use-ui-store'
 
 interface DiffResolverProps {
   segments: Segment[]
-  onSelectDiff: (diffId: number, choice: 's1' | 's2') => void
+  onResolveDiff: (diffId: number, selection: DiffSelection) => void
+  onUpdateCustomDraft: (diffId: number, value: string) => void
   resolvedText: string
   fontFamily: EditorFontFamily
   fontSize: number
 }
 
+function getPresetLabel(index: number): string {
+  if (index === 0) return 'A'
+  if (index === 1) return 'B'
+  return String(index + 1)
+}
+
 export function DiffResolver({
   segments,
-  onSelectDiff,
+  onResolveDiff,
+  onUpdateCustomDraft,
   resolvedText,
   fontFamily,
   fontSize,
 }: DiffResolverProps) {
   const { t } = useTranslation('workspace')
   const pillRefs = useRef<Map<number, HTMLButtonElement>>(new Map())
+  const customInputRefs = useRef<Map<number, HTMLTextAreaElement>>(new Map())
   const [openDiffId, setOpenDiffId] = useState<number | null>(null)
 
   const diffSegments = segments.filter((seg): seg is DiffSegment => seg.type === 'diff')
-  const unresolvedCount = diffSegments.filter((seg) => seg.selected === null).length
+  const unresolvedCount = diffSegments.filter((seg) => !isDiffResolved(seg)).length
 
-  const focusDiff = useCallback(
-    (diffId: number) => {
-      setTimeout(() => {
-        pillRefs.current.get(diffId)?.focus()
-      }, 50)
-    },
-    []
-  )
+  const focusDiff = useCallback((diffId: number) => {
+    setTimeout(() => {
+      pillRefs.current.get(diffId)?.focus()
+    }, 50)
+  }, [])
 
   const navigateBetweenDiffs = useCallback(
     (currentDiffId: number, direction: 'prev' | 'next', options?: { keepOpen?: boolean }) => {
@@ -58,22 +66,22 @@ export function DiffResolver({
 
       if (targetId === undefined) return
 
-      if (options?.keepOpen) {
-        setOpenDiffId(targetId)
-      } else {
-        setOpenDiffId(null)
-      }
+      setOpenDiffId(options?.keepOpen ? targetId : null)
 
       setTimeout(() => {
-        pillRefs.current.get(targetId)?.focus()
+        if (options?.keepOpen) {
+          customInputRefs.current.get(targetId)?.focus()
+        } else {
+          pillRefs.current.get(targetId)?.focus()
+        }
       }, 50)
     },
     [diffSegments]
   )
 
-  const selectDiff = useCallback(
-    (diffId: number, choice: 's1' | 's2', options?: { keepOpen?: boolean }) => {
-      onSelectDiff(diffId, choice)
+  const selectPreset = useCallback(
+    (diffId: number, index: number, options?: { keepOpen?: boolean }) => {
+      onResolveDiff(diffId, { kind: 'preset', index })
       if (options?.keepOpen) {
         setOpenDiffId(diffId)
       } else {
@@ -81,43 +89,68 @@ export function DiffResolver({
         focusDiff(diffId)
       }
     },
-    [onSelectDiff, focusDiff]
+    [onResolveDiff, focusDiff]
   )
 
   const handlePillKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLButtonElement>, diffId: number) => {
+    (e: React.KeyboardEvent<HTMLButtonElement>, seg: DiffSegment) => {
+      const diffId = seg.id
+
       if (e.key === 'Tab' && !e.shiftKey) {
         e.preventDefault()
         navigateBetweenDiffs(diffId, 'next')
-      } else if (e.key === 'Tab' && e.shiftKey) {
+        return
+      }
+      if (e.key === 'Tab' && e.shiftKey) {
         e.preventDefault()
         navigateBetweenDiffs(diffId, 'prev')
-      } else if (e.key === 'ArrowRight') {
+        return
+      }
+      if (e.key === 'ArrowRight') {
         e.preventDefault()
         navigateBetweenDiffs(diffId, 'next')
-      } else if (e.key === 'ArrowLeft') {
+        return
+      }
+      if (e.key === 'ArrowLeft') {
         e.preventDefault()
         navigateBetweenDiffs(diffId, 'prev')
-      } else if (e.key === 'ArrowUp' || e.key === '1') {
+        return
+      }
+
+      const presetIndex = Number(e.key) - 1
+      if (presetIndex >= 0 && presetIndex < seg.options.length) {
         e.preventDefault()
-        selectDiff(diffId, 's1', { keepOpen: true })
-      } else if (e.key === 'ArrowDown' || e.key === '2') {
+        selectPreset(diffId, presetIndex, { keepOpen: true })
+        return
+      }
+
+      if (e.key === 'c' || e.key === 'C') {
         e.preventDefault()
-        selectDiff(diffId, 's2', { keepOpen: true })
+        setOpenDiffId(diffId)
+        setTimeout(() => customInputRefs.current.get(diffId)?.focus(), 50)
       }
     },
-    [selectDiff, navigateBetweenDiffs]
+    [selectPreset, navigateBetweenDiffs]
   )
 
   const handleMenuKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLDivElement>, diffId: number) => {
-      if (e.key === '1' || e.key === 'ArrowUp') {
+    (e: React.KeyboardEvent<HTMLDivElement>, seg: DiffSegment) => {
+      const diffId = seg.id
+      const presetIndex = Number(e.key) - 1
+
+      if (presetIndex >= 0 && presetIndex < seg.options.length) {
         e.preventDefault()
-        selectDiff(diffId, 's1', { keepOpen: true })
-      } else if (e.key === '2' || e.key === 'ArrowDown') {
+        selectPreset(diffId, presetIndex, { keepOpen: true })
+        return
+      }
+
+      if (e.key === 'c' || e.key === 'C') {
         e.preventDefault()
-        selectDiff(diffId, 's2', { keepOpen: true })
-      } else if (e.key === 'ArrowRight') {
+        customInputRefs.current.get(diffId)?.focus()
+        return
+      }
+
+      if (e.key === 'ArrowRight') {
         e.preventDefault()
         navigateBetweenDiffs(diffId, 'next', { keepOpen: true })
       } else if (e.key === 'ArrowLeft') {
@@ -125,7 +158,7 @@ export function DiffResolver({
         navigateBetweenDiffs(diffId, 'prev', { keepOpen: true })
       }
     },
-    [selectDiff, navigateBetweenDiffs]
+    [selectPreset, navigateBetweenDiffs]
   )
 
   const resolvedFontFamily = FONT_FAMILY_MAP[fontFamily]
@@ -177,8 +210,12 @@ export function DiffResolver({
               )
             }
 
-            const isUnresolved = seg.selected === null
-            const displayText = seg.selected ? seg[seg.selected] : '?'
+            const isUnresolved = !isDiffResolved(seg)
+            const displayText = isUnresolved ? '?' : getDiffResolvedValue(seg)
+            const customValue = seg.customDraft
+            const optionsSummary = seg.options
+              .map((option, index) => `${getPresetLabel(index)}: ${option}`)
+              .join(' | ')
 
             return (
               <DropdownMenu
@@ -195,7 +232,7 @@ export function DiffResolver({
                         pillRefs.current.delete(seg.id)
                       }
                     }}
-                    onKeyDown={(e) => handlePillKeyDown(e, seg.id)}
+                    onKeyDown={(e) => handlePillKeyDown(e, seg)}
                     className={cn(
                       'inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full font-medium text-[0.85em] border shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 select-none mx-1.5 align-middle cursor-pointer',
                       isUnresolved
@@ -204,8 +241,8 @@ export function DiffResolver({
                     )}
                     title={
                       isUnresolved
-                        ? `Difference unresolved. Option A: ${seg.s1} | Option B: ${seg.s2}`
-                        : `Resolved: ${seg[seg.selected!]}`
+                        ? `${optionsSummary} | ${t('diffResolver.optionCustom')}`
+                        : `${t('diffResolver.resolved')}: ${displayText}`
                     }
                   >
                     <span className="truncate max-w-[320px]" style={{ fontFamily: resolvedFontFamily }}>
@@ -216,39 +253,69 @@ export function DiffResolver({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="start"
-                  className="min-w-[220px] shadow-lg"
-                  onKeyDown={(e) => handleMenuKeyDown(e, seg.id)}
+                  className="min-w-[260px] shadow-lg"
+                  onKeyDown={(e) => handleMenuKeyDown(e, seg)}
                 >
-                  <DropdownMenuItem
-                    onSelect={(e) => {
-                      e.preventDefault()
-                      selectDiff(seg.id, 's1', { keepOpen: true })
-                    }}
-                    className="flex items-center justify-between gap-4 cursor-pointer py-2 px-3"
-                  >
-                    <span className="flex-1 text-left truncate" style={{ fontFamily: resolvedFontFamily }}>
-                      {t('diffResolver.optionA')}: {seg.s1}
-                    </span>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {seg.selected === 's1' && <Check className="h-4 w-4 text-emerald-600" />}
-                      <DropdownMenuShortcut>1 / ↑</DropdownMenuShortcut>
+                  {seg.options.map((option, index) => {
+                    const isSelected =
+                      seg.selected?.kind === 'preset' && seg.selected.index === index
+                    const shortcut = index < 9 ? String(index + 1) : undefined
+
+                    return (
+                      <DropdownMenuItem
+                        key={index}
+                        onSelect={(e) => {
+                          e.preventDefault()
+                          selectPreset(seg.id, index, { keepOpen: true })
+                        }}
+                        className="flex items-center justify-between gap-4 cursor-pointer py-2 px-3"
+                      >
+                        <span className="flex-1 text-left truncate" style={{ fontFamily: resolvedFontFamily }}>
+                          {t('diffResolver.optionPreset', { label: getPresetLabel(index) })}: {option}
+                        </span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {isSelected && <Check className="h-4 w-4 text-emerald-600" />}
+                          {shortcut && <DropdownMenuShortcut>{shortcut}</DropdownMenuShortcut>}
+                        </div>
+                      </DropdownMenuItem>
+                    )
+                  })}
+                  <div className="border-t border-border px-3 py-2 space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <label
+                        htmlFor={`diff-custom-${seg.id}`}
+                        className="text-xs font-medium text-muted-foreground"
+                      >
+                        {t('diffResolver.optionCustom')}
+                      </label>
+                      {seg.selected?.kind === 'custom' && seg.selected.value.trim().length > 0 && (
+                        <Check className="h-4 w-4 text-emerald-600 shrink-0" />
+                      )}
                     </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={(e) => {
-                      e.preventDefault()
-                      selectDiff(seg.id, 's2', { keepOpen: true })
-                    }}
-                    className="flex items-center justify-between gap-4 cursor-pointer py-2 px-3"
-                  >
-                    <span className="flex-1 text-left truncate" style={{ fontFamily: resolvedFontFamily }}>
-                      {t('diffResolver.optionB')}: {seg.s2}
-                    </span>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {seg.selected === 's2' && <Check className="h-4 w-4 text-emerald-600" />}
-                      <DropdownMenuShortcut>2 / ↓</DropdownMenuShortcut>
-                    </div>
-                  </DropdownMenuItem>
+                    <Textarea
+                      id={`diff-custom-${seg.id}`}
+                      ref={(el) => {
+                        if (el) {
+                          customInputRefs.current.set(seg.id, el)
+                        } else {
+                          customInputRefs.current.delete(seg.id)
+                        }
+                      }}
+                      value={customValue}
+                      onChange={(e) => onUpdateCustomDraft(seg.id, e.target.value)}
+                      placeholder={t('diffResolver.customPlaceholder')}
+                      rows={2}
+                      className="min-h-8 h-auto max-h-24 resize-y text-sm py-1.5"
+                      style={{ fontFamily: resolvedFontFamily }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault()
+                          setOpenDiffId(null)
+                          focusDiff(seg.id)
+                        }
+                      }}
+                    />
+                  </div>
                 </DropdownMenuContent>
               </DropdownMenu>
             )

@@ -1,7 +1,12 @@
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Type, ALargeSmall, RotateCcw, GitCompare, PenLine, Keyboard } from 'lucide-react'
+import { Type, ALargeSmall, RotateCcw, GitCompare, PenLine, Keyboard, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   Select,
   SelectContent,
@@ -26,12 +31,12 @@ type EditorToolbarProps = {
 
 function ShortcutHint({ keys, label }: { keys: string; label: string }) {
   return (
-    <span className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-[11px] text-muted-foreground">
-      <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-foreground">
+    <div className="flex items-center justify-between gap-4 py-1.5">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <kbd className="shrink-0 rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-foreground">
         {keys}
       </kbd>
-      <span>{label}</span>
-    </span>
+    </div>
   )
 }
 
@@ -170,21 +175,32 @@ export function EditorToolbar({
       )}
 
       {showDiffShortcuts && (
-        <div
-          className="flex shrink-0 items-center gap-2.5"
-          aria-label={t('shortcuts.title')}
-        >
-          <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-muted-foreground whitespace-nowrap">
-            <Keyboard className="h-3.5 w-3.5" aria-hidden="true" />
-            {t('shortcuts.title')}
-          </span>
-          <Separator orientation="vertical" className="h-4" />
-          <ShortcutHint keys="1 / ↑" label={t('shortcuts.selectOptionA')} />
-          <Separator orientation="vertical" className="h-4" />
-          <ShortcutHint keys="2 / ↓" label={t('shortcuts.selectOptionB')} />
-          <Separator orientation="vertical" className="h-4" />
-          <ShortcutHint keys="← → / Tab" label={t('shortcuts.navigateDiffs')} />
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 gap-1.5 px-2.5 text-[11px] font-medium text-muted-foreground hover:text-foreground data-[state=open]:text-foreground"
+              aria-label={t('shortcuts.toggleOpen')}
+            >
+              <Keyboard className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              {t('shortcuts.title')}
+              <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-60" aria-hidden="true" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-[280px] p-3">
+            <p className="mb-1 px-0.5 text-xs font-semibold text-foreground">
+              {t('shortcuts.title')}
+            </p>
+            <div className="divide-y divide-border">
+              <ShortcutHint keys="1–9" label={t('shortcuts.selectOptions')} />
+              <ShortcutHint keys="C" label={t('shortcuts.selectOptionCustom')} />
+              <ShortcutHint keys="← → / Tab" label={t('shortcuts.navigateDiffs')} />
+              <ShortcutHint keys="Enter" label={t('shortcuts.confirmCustom')} />
+              <ShortcutHint keys="Shift + Enter" label={t('shortcuts.customLineBreak')} />
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
       )}
     </div>
   )

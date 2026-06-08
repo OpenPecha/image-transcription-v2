@@ -85,6 +85,10 @@
     "preview": "སྔོན་ལྟ།",
     "optionA": "འདེམས་ཚན་ ཀ (s1)",
     "optionB": "འདེམས་ཚན་ ཁ (s2)",
+    "optionPreset": "འདེམས་ཚན་ {{label}}",
+    "optionCustom": "འདེམས་ཚན་ ག (རང་འགྲིག)",
+    "customPlaceholder": "རང་འགྲིག་ཡི་གེ་འཇུག...",
+    "resolved": "ཐག་བཅད་ཟིན",
     "unresolvedCount": "ཐག་མ་ཆོད་པའི་ཁྱད་པར་ {{count}} འདུག",
     "allResolved": "ཁྱད་པར་ཚང་མ་ཐག་བཅད་ཟིན།",
     "previewPlaceholder": "ཐག་བཅད་ཟིན་པའི་སྔོན་ལྟ་འདིར་འཆར་རྒྱུ་ཡིན།"
@@ -96,9 +100,15 @@
   },
   "shortcuts": {
     "title": "མྱུར་མཐེད།",
+    "toggleOpen": "མྱུར་མཐེད་མཐེད་སྟོན།",
+    "toggleClose": "མྱུར་མཐེད་མཐེད་སྦ།",
     "selectOptionA": "འདེམས་ཚན་ ཀ འདེམས།",
     "selectOptionB": "འདེམས་ཚན་ ཁ འདེམས།",
-    "navigateDiffs": "ཁྱད་པར་བར་ནས་སྐྱོད།"
+    "selectOptions": "འདེམས་ཚན་འདེམས།",
+    "selectOptionCustom": "རང་འགྲིག་ནང་འཇུག་ལ་དམིགས།",
+    "navigateDiffs": "ཁྱད་པར་བར་ནས་སྐྱོད།",
+    "confirmCustom": "རང་འགྲིག་ནང་འཇུག་ངེས་པར་དུ་བཟོ།",
+    "customLineBreak": "རང་འགྲིག་ནང་འཇུག་ནང་སྐད་ཆའི་མཐའ་བར།"
   },
   "dictionary": {
     "title": "ཡིག་འགྲིག་ཚད་གཞི།",
