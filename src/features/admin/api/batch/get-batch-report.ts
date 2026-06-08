@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/lib/axios'
-import { type BatchReport } from '@/types'
+import { normalizeBatchReport, type BatchReport } from '@/types'
 import { batchKeys } from './batch-keys'
 
 const getBatchReport = async (batchId: string): Promise<BatchReport> => {
-  return apiClient.get(`/batch/${batchId}/report`)
+  const report = (await apiClient.get(`/batch/${batchId}/report`)) as BatchReport
+  return normalizeBatchReport(report)
 }
 
 export const useGetBatchReport = (batchId: string, enabled: boolean = true) => {

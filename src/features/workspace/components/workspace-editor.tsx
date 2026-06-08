@@ -53,8 +53,8 @@ function WorkspaceMainShell({
   children: ReactNode
 }) {
   return (
-    <main className="ml-60 flex min-h-0 flex-1 overflow-hidden">
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>
+    <main className="ml-60 flex h-dvh max-h-dvh min-h-0 flex-1 overflow-hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">{children}</div>
       <LookupDictionaryPanel enabled={dictionaryEnabled} />
     </main>
   )
@@ -308,7 +308,7 @@ export function WorkspaceEditor() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen">
+      <div className="flex h-dvh max-h-dvh overflow-hidden bg-background">
         <WorkspaceSidebar
           task={null}
           onRefresh={() => refetch()}
@@ -329,7 +329,7 @@ export function WorkspaceEditor() {
       : undefined
 
     return (
-      <div className="flex h-screen">
+      <div className="flex h-dvh max-h-dvh overflow-hidden bg-background">
         <WorkspaceSidebar
           task={null}
           onRefresh={() => refetch()}
@@ -347,7 +347,7 @@ export function WorkspaceEditor() {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-dvh max-h-dvh overflow-hidden bg-background">
       <WorkspaceSidebar
         task={task}
         onRefresh={() => refetch()}
@@ -456,7 +456,7 @@ export function WorkspaceEditor() {
           </div>
         </div>
 
-        <footer className="grid grid-cols-3 items-center border-t border-border bg-card px-6 py-3">
+        <footer className="shrink-0 grid grid-cols-3 items-center border-t border-border bg-card px-6 py-3">
           <div className="flex items-center" />
 
           <div className="flex items-center justify-center gap-3">

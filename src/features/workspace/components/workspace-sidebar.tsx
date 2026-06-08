@@ -80,7 +80,7 @@ export function WorkspaceSidebar({
   return (
     <aside
       ref={sidebarRef}
-      className="fixed left-0 top-0 z-40 flex h-screen w-60 flex-col border-r border-sidebar-border bg-sidebar"
+      className="fixed left-0 top-0 z-40 flex h-dvh max-h-dvh w-60 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar"
     >
       {/* Logo / Brand */}
       <div className="flex h-16 items-center px-4">
@@ -189,7 +189,7 @@ export function WorkspaceSidebar({
       <Separator className="bg-sidebar-border" />
 
       {/* User Profile & Settings */}
-      <div className="p-2">
+      <div className="shrink-0 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         {/* Settings Panel - Animated */}
         <div
           className={cn(
