@@ -43,7 +43,7 @@ export type {
 export type { Group, GroupWithUsers, GroupRequest, GroupUpdateRequest } from './group'
 
 // Batch types
-export { BATCH_STATS_CONFIG, WORKFLOW_STATS, normalizeBatchReport } from './batch'
+export { BATCH_STATS_CONFIG, WORKFLOW_STATS } from './batch'
 export type {
   Batch,
   BatchReport,

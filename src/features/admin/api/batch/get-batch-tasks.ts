@@ -15,7 +15,7 @@ const getBatchTasks = async ({ batchId, state }: GetBatchTasksParams): Promise<B
 
 export const useGetBatchTasks = (batchId: string, state?: BatchTaskState | 'all') => {
   return useQuery({
-    queryKey: batchKeys.tasks(batchId, state),
+    queryKey: batchKeys.tasks(batchId, { state: state ?? 'all' }),
     queryFn: () => getBatchTasks({ batchId, state }),
     enabled: !!batchId,
     staleTime: 1000 * 60 * 2, // 2 minutes

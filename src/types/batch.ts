@@ -83,11 +83,6 @@ export type ApplicationBatchReport = {
   trashed: number
 }
 
-/** Normalizes batch report payloads from the API (no aggregate finalising stat). */
-export function normalizeBatchReport(report: BatchReport): BatchReport {
-  return report
-}
-
 // Individual task in upload JSON
 export interface BatchUploadTask {
   name: string
