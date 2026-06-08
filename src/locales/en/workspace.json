@@ -85,6 +85,10 @@
     "preview": "Preview",
     "optionA": "Option A",
     "optionB": "Option B",
+    "optionPreset": "Option {{label}}",
+    "optionCustom": "Option C",
+    "customPlaceholder": "Enter custom text...",
+    "resolved": "Resolved",
     "unresolvedCount": "{{count}} unresolved differences",
     "allResolved": "All differences resolved",
     "previewPlaceholder": "Resolved preview will appear here..."
@@ -96,9 +100,15 @@
   },
   "shortcuts": {
     "title": "Shortcuts",
+    "toggleOpen": "Show keyboard shortcuts",
+    "toggleClose": "Hide keyboard shortcuts",
     "selectOptionA": "Select Option A",
     "selectOptionB": "Select Option B",
-    "navigateDiffs": "Navigate between diffs"
+    "selectOptions": "Select options",
+    "selectOptionCustom": "Focus custom input",
+    "navigateDiffs": "Navigate between diffs",
+    "confirmCustom": "Confirm custom input",
+    "customLineBreak": "Line break in custom input"
   },
   "dictionary": {
     "title": "Transcription Standards",

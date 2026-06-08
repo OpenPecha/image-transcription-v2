@@ -1,14 +1,45 @@
 export type TextSegment = { type: 'text'; content: string }
 
+export type DiffSelection =
+  | { kind: 'preset'; index: number }
+  | { kind: 'custom'; value: string }
+
 export type DiffSegment = {
   type: 'diff'
   id: number
-  s1: string
-  s2: string
-  selected: 's1' | 's2' | null // null = unresolved
+  options: string[]
+  selected: DiffSelection | null
+  customDraft: string
 }
 
 export type Segment = TextSegment | DiffSegment
+
+function extractOptionsFromParsed(parsed: Record<string, unknown>): string[] {
+  return Object.keys(parsed)
+    .filter((key) => /^s\d+$/.test(key))
+    .sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)))
+    .map((key) => String(parsed[key] ?? ''))
+}
+
+export function getDiffResolvedValue(seg: DiffSegment): string {
+  if (!seg.selected) return ''
+  if (seg.selected.kind === 'preset') {
+    return seg.options[seg.selected.index] ?? ''
+  }
+  return seg.selected.value
+}
+
+export function isDiffResolved(seg: DiffSegment): boolean {
+  if (!seg.selected) return false
+  if (seg.selected.kind === 'custom') {
+    return seg.selected.value.trim().length > 0
+  }
+  return (
+    seg.selected.index >= 0 &&
+    seg.selected.index < seg.options.length &&
+    seg.options[seg.selected.index] !== undefined
+  )
+}
 
 /**
  * Splits raw transcript into segments. Each diff starts with selected: null (unresolved).
@@ -17,7 +48,6 @@ export function parseTDiff(raw: string): Segment[] {
   if (!raw) return []
 
   const segments: Segment[] = []
-  // Matches <t-diff data='...'></t-diff> or <t-diff data="..."/> (with optional whitespace)
   const regex = /<t-diff\s+data=(['"])(.*?)\1\s*(?:\/>|><\/t-diff>)/g
 
   let lastIndex = 0
@@ -29,7 +59,6 @@ export function parseTDiff(raw: string): Segment[] {
     const matchText = match[0]
     const jsonData = match[2]
 
-    // If there is text before this match, add it as a text segment
     if (matchIndex > lastIndex) {
       segments.push({
         type: 'text',
@@ -38,24 +67,22 @@ export function parseTDiff(raw: string): Segment[] {
     }
 
     try {
-      // Decode HTML entities if they exist (standard behavior for data-attributes in some HTML parsers)
       const decodedJson = jsonData
         .replace(/&quot;/g, '"')
         .replace(/&apos;/g, "'")
         .replace(/&lt;/g, '<')
         .replace(/&gt;/g, '>')
         .replace(/&amp;/g, '&')
-      
-      const parsed = JSON.parse(decodedJson)
+
+      const parsed = JSON.parse(decodedJson) as Record<string, unknown>
       segments.push({
         type: 'diff',
         id: id++,
-        s1: parsed.s1 ?? '',
-        s2: parsed.s2 ?? '',
+        options: extractOptionsFromParsed(parsed),
         selected: null,
+        customDraft: '',
       })
-    } catch (e) {
-      // If parsing fails, fall back to adding it as a text segment
+    } catch {
       segments.push({
         type: 'text',
         content: matchText,
@@ -65,7 +92,6 @@ export function parseTDiff(raw: string): Segment[] {
     lastIndex = regex.lastIndex
   }
 
-  // Add any remaining text
   if (lastIndex < raw.length) {
     segments.push({
       type: 'text',
@@ -76,28 +102,19 @@ export function parseTDiff(raw: string): Segment[] {
   return segments
 }
 
-/**
- * Compiles segments into clean text using the selected value for each diff.
- * If a diff is unresolved, it falls back to an empty string (or Option A to prevent crash,
- * though submit will be blocked until resolved).
- */
 export function resolveSegments(segments: Segment[]): string {
   return segments
     .map((seg) => {
       if (seg.type === 'text') {
         return seg.content
-      } else {
-        return seg.selected ? seg[seg.selected] : ''
       }
+      return isDiffResolved(seg) ? getDiffResolvedValue(seg) : ''
     })
     .join('')
 }
 
-/**
- * Returns true only when every diff segment has a non-null selection.
- */
 export function allDiffsResolved(segments: Segment[]): boolean {
-  return segments.every((seg) => seg.type !== 'diff' || seg.selected !== null)
+  return segments.every((seg) => seg.type !== 'diff' || isDiffResolved(seg))
 }
 
 const DIFF_DRAFT_KEY_PREFIX = 'draft_task_diff_'
@@ -106,47 +123,116 @@ export function getDiffDraftKey(taskId: string): string {
   return `${DIFF_DRAFT_KEY_PREFIX}${taskId}`
 }
 
-export function loadDiffDraftSelections(taskId: string): Record<number, 's1' | 's2' | null> | null {
+type LegacyDraftSelection = 's1' | 's2' | null
+
+type StoredDiffDraft =
+  | LegacyDraftSelection
+  | DiffSelection
+  | null
+  | {
+      selected: DiffSelection | null
+      customDraft?: string
+    }
+
+type DiffDraftEntry = {
+  selected: DiffSelection | null
+  customDraft: string
+}
+
+function normalizeDraftSelection(value: unknown): DiffSelection | null {
+  if (value === null || value === undefined) return null
+  if (value === 's1') return { kind: 'preset', index: 0 }
+  if (value === 's2') return { kind: 'preset', index: 1 }
+  if (typeof value !== 'object') return null
+
+  const record = value as Record<string, unknown>
+  if ('selected' in record) {
+    return normalizeDraftSelection(record.selected)
+  }
+
+  const selection = value as Partial<DiffSelection>
+  if (selection.kind === 'preset' && typeof selection.index === 'number') {
+    return { kind: 'preset', index: selection.index }
+  }
+  if (selection.kind === 'custom' && typeof selection.value === 'string') {
+    return { kind: 'custom', value: selection.value }
+  }
+  return null
+}
+
+function normalizeDraftEntry(value: unknown): DiffDraftEntry {
+  const selected = normalizeDraftSelection(value)
+  if (value !== null && typeof value === 'object' && 'selected' in value) {
+    const record = value as { selected: unknown; customDraft?: unknown }
+    const customDraft =
+      typeof record.customDraft === 'string'
+        ? record.customDraft
+        : selected?.kind === 'custom'
+          ? selected.value
+          : ''
+    return { selected, customDraft }
+  }
+
+  return {
+    selected,
+    customDraft: selected?.kind === 'custom' ? selected.value : '',
+  }
+}
+
+export function loadDiffDraftSelections(
+  taskId: string
+): Record<number, DiffDraftEntry> | null {
   try {
     const stored = localStorage.getItem(getDiffDraftKey(taskId))
     if (!stored) return null
-    return JSON.parse(stored) as Record<number, 's1' | 's2' | null>
+
+    const parsed = JSON.parse(stored) as Record<string, StoredDiffDraft>
+    const drafts: Record<number, DiffDraftEntry> = {}
+
+    for (const [key, value] of Object.entries(parsed)) {
+      drafts[Number(key)] = normalizeDraftEntry(value)
+    }
+
+    return drafts
   } catch {
     return null
   }
 }
 
-export function saveDiffDraftSelections(
-  taskId: string,
-  segments: Segment[]
-): void {
-  const selections = segments.reduce(
+export function saveDiffDraftSelections(taskId: string, segments: Segment[]): void {
+  const drafts = segments.reduce(
     (acc, seg) => {
       if (seg.type === 'diff') {
-        acc[seg.id] = seg.selected
+        acc[seg.id] = {
+          selected: seg.selected,
+          customDraft: seg.customDraft,
+        }
       }
       return acc
     },
-    {} as Record<number, 's1' | 's2' | null>
+    {} as Record<number, DiffDraftEntry>
   )
-  localStorage.setItem(getDiffDraftKey(taskId), JSON.stringify(selections))
+  localStorage.setItem(getDiffDraftKey(taskId), JSON.stringify(drafts))
 }
 
 export function clearDiffDraft(taskId: string): void {
   localStorage.removeItem(getDiffDraftKey(taskId))
 }
 
-/**
- * Returns a new segment array with saved diff selections applied immutably.
- */
 export function applyDiffSelections(
   segments: Segment[],
-  selections: Record<number, 's1' | 's2' | null>
+  drafts: Record<number, DiffDraftEntry>
 ): Segment[] {
   return segments.map((seg) => {
-    if (seg.type !== 'diff' || selections[seg.id] === undefined) {
+    if (seg.type !== 'diff' || drafts[seg.id] === undefined) {
       return seg
     }
-    return { ...seg, selected: selections[seg.id] }
+
+    const { selected, customDraft } = drafts[seg.id]
+    if (selected?.kind === 'preset' && selected.index >= seg.options.length) {
+      return { ...seg, selected: null, customDraft }
+    }
+
+    return { ...seg, selected, customDraft }
   })
 }
