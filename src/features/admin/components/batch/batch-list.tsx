@@ -20,7 +20,7 @@ export function BatchList() {
   const { data: applicationReports, isLoading: isApplicationReportLoading } =
     useGetApplicationBatchReport(APPLICATION_NAME)
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
-
+  
   return (
     <>
       <Card>
@@ -37,19 +37,20 @@ export function BatchList() {
           </Button>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="mb-6 space-y-2">
+          <div className="mb-6 space-y-4">
             {isApplicationReportLoading ? (
-              <ApplicationBatchSummary
-                report={undefined}
-                isLoading={true}
-              />
+              <>
+                <ApplicationBatchSummary report={undefined} isLoading={true} />
+                <ApplicationBatchSummary report={undefined} isLoading={true} />
+              </>
             ) : (
-              applicationReports && (
+              applicationReports.map((report) => (
                 <ApplicationBatchSummary
-                  report={applicationReports}
+                  key={report.id}
+                  report={report}
                   isLoading={false}
                 />
-              )
+              ))
             )}
           </div>
 
