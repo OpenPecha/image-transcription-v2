@@ -17,7 +17,7 @@ import { BatchUploadDialog } from './batch-upload-dialog'
 export function BatchList() {
   const { t } = useTranslation('admin')
   const { data: batches = [], isLoading } = useGetBatches()
-  const { data: applicationReports, isLoading: isApplicationReportLoading } =
+  const { data: applicationReports = [], isLoading: isApplicationReportLoading } =
     useGetApplicationBatchReport(APPLICATION_NAME)
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
   
