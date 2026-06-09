@@ -8,8 +8,7 @@ import { TaskConfirmationDialog } from './task-confirmation-dialog'
 import { EditorOverlay } from './editor-overlay'
 import { EditorToolbar } from './editor-toolbar'
 import { EmptyTasksState } from './empty-tasks-state'
-import { DiffResolver } from './diff-resolver'
-import { ReviewerNoDiffPanel } from './reviewer-no-diff-panel'
+import { DiffResolver, type DiffResolverHandle } from './diff-resolver'
 import { LookupDictionaryPanel } from './lookup-dictionary-panel'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -19,13 +18,21 @@ import { FONT_FAMILY_MAP } from './constant'
 import {
   parseTDiff,
   resolveSegments,
+  resolveSegmentsPreview,
   allDiffsResolved,
   applyDiffSelections,
   loadDiffDraftSelections,
   saveDiffDraftSelections,
+  saveSegmentDraft,
+  loadSegmentDraft,
   clearDiffDraft,
+  insertLocalDiff,
+  removeLocalDiff,
+  getNextDiffId,
+  isDuplicateReviewerInput,
   type Segment,
   type DiffSelection,
+  type LocalDiffTarget,
 } from '../utils/parse-tdiff'
 import {
   useGetAssignedTask,
@@ -75,8 +82,12 @@ export function WorkspaceEditor() {
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false)
   const [approveDialogOpen, setApproveDialogOpen] = useState(false)
   const [segments, setSegments] = useState<Segment[]>([])
+  const [hasTextSelection, setHasTextSelection] = useState(false)
+  const [baseTranscript, setBaseTranscript] = useState('')
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const diffResolverRef = useRef<DiffResolverHandle>(null)
+  const textPanelRef = useRef<HTMLDivElement>(null)
 
   const {
     data: task,
@@ -95,16 +106,20 @@ export function WorkspaceEditor() {
   const usesReviewerTranscript = roleCaps?.usesReviewerTranscript ?? false
   const usesApproveAction = roleCaps?.usesApproveAction ?? false
   const canTrash = isAnnotator && task ? canAnnotatorTrashTask(task.state) : false
+  const usesDiffResolver = roleCaps?.usesDiffResolver ?? false
   const hasDiffSegments = segments.some((seg) => seg.type === 'diff')
-  const hasDiffs = (roleCaps?.usesDiffResolver ?? false) && hasDiffSegments
-  const isReviewerNoDiffs = usesReviewerTranscript && !hasDiffs
+  const hasAnnotatorDiffs = useMemo(
+    () => parseTDiff(baseTranscript).some((seg) => seg.type === 'diff'),
+    [baseTranscript]
+  )
   const resolvedText = useMemo(() => resolveSegments(segments), [segments])
+  const previewText = useMemo(() => resolveSegmentsPreview(segments), [segments])
 
   const { clearDraft } = useLocalDraft({
     taskId: task?.task_id ?? null,
     text,
     delay: 500,
-    enabled: !hasDiffs && !usesReviewerTranscript,
+    enabled: !usesDiffResolver,
   })
 
   const canEdit = task ? isEditableTaskState(task.state) : false
@@ -119,11 +134,11 @@ export function WorkspaceEditor() {
 
   const canApprove = useMemo(() => {
     if (!usesApproveAction || !canActOnTask || isMutating) return false
-    if (!hasDiffSegments) return true
+    if (!usesDiffResolver || !hasDiffSegments) return true
     return allDiffsResolved(segments)
-  }, [usesApproveAction, canActOnTask, isMutating, hasDiffSegments, segments])
+  }, [usesApproveAction, canActOnTask, isMutating, usesDiffResolver, hasDiffSegments, segments])
 
-  const transcriptForSubmit = hasDiffs ? resolvedText : text
+  const transcriptForSubmit = usesDiffResolver ? resolvedText : text
 
   // Sync editor state when the assigned task changes
   useEffect(() => {
@@ -139,22 +154,28 @@ export function WorkspaceEditor() {
       : getAnnotatorBaselineTranscript(task)
 
     const parsed = parseTDiff(transcript)
-    const containsDiffs =
-      (roleCaps?.usesDiffResolver ?? false) && parsed.some((seg) => seg.type === 'diff')
+    const usesResolver = roleCaps?.usesDiffResolver ?? false
 
     let nextSegments = parsed
-    if (containsDiffs) {
-      const savedSelections = loadDiffDraftSelections(task.task_id)
-      if (savedSelections) {
-        nextSegments = applyDiffSelections(parsed, savedSelections)
+    if (usesResolver) {
+      const savedSegments = loadSegmentDraft(task.task_id, transcript)
+      if (savedSegments) {
+        nextSegments = savedSegments
+      } else if (parsed.some((seg) => seg.type === 'diff')) {
+        const savedSelections = loadDiffDraftSelections(task.task_id)
+        if (savedSelections) {
+          nextSegments = applyDiffSelections(parsed, savedSelections)
+        }
       }
     }
 
     setSegments(nextSegments)
+    setBaseTranscript(transcript)
     setOriginalOcrText(transcript)
+    setHasTextSelection(false)
 
-    if (containsDiffs) {
-      setText(resolveSegments(nextSegments))
+    if (usesResolver) {
+      setText(resolveSegmentsPreview(nextSegments))
     } else if (usesReviewerTranscript) {
       setText(transcript)
     } else {
@@ -188,19 +209,37 @@ export function WorkspaceEditor() {
     }
   }, [clearDraft, task])
 
+  const persistSegments = useCallback(
+    (next: Segment[]) => {
+      if (!task) return
+      saveDiffDraftSelections(task.task_id, next)
+      saveSegmentDraft(task.task_id, next, baseTranscript)
+    },
+    [task, baseTranscript]
+  )
+
   const handleResolveDiff = useCallback(
     (diffId: number, selected: DiffSelection) => {
       setSegments((prev) => {
-        const next = prev.map((seg) =>
-          seg.type === 'diff' && seg.id === diffId ? { ...seg, selected } : seg
-        )
-        if (task) {
-          saveDiffDraftSelections(task.task_id, next)
-        }
+        const next = prev.map((seg) => {
+          if (seg.type !== 'diff' || seg.id !== diffId) return seg
+          if (
+            selected.kind === 'custom' &&
+            isDuplicateReviewerInput(seg, selected.value)
+          ) {
+            return seg
+          }
+          const customDraft =
+            selected.kind === 'preset'
+              ? (seg.options[selected.index] ?? seg.customDraft)
+              : seg.customDraft
+          return { ...seg, selected, customDraft, confirmed: true }
+        })
+        persistSegments(next)
         return next
       })
     },
-    [task]
+    [persistSegments]
   )
 
   const handleUpdateCustomDraft = useCallback(
@@ -208,16 +247,48 @@ export function WorkspaceEditor() {
       setSegments((prev) => {
         const next = prev.map((seg) =>
           seg.type === 'diff' && seg.id === diffId
-            ? { ...seg, customDraft: value, selected: { kind: 'custom' as const, value } }
+            ? {
+                ...seg,
+                customDraft: value,
+                selected: { kind: 'custom' as const, value },
+                confirmed: false,
+              }
             : seg
         )
-        if (task) {
-          saveDiffDraftSelections(task.task_id, next)
-        }
+        persistSegments(next)
         return next
       })
     },
-    [task]
+    [persistSegments]
+  )
+
+  const handleCreateLocalDiff = useCallback(
+    (target: LocalDiffTarget): number | null => {
+      const diffId = getNextDiffId(segments)
+      const next = insertLocalDiff(segments, target, diffId)
+      if (!next) return null
+
+      setSegments(next)
+      persistSegments(next)
+      return diffId
+    },
+    [segments, persistSegments]
+  )
+
+  const handleEditSelection = useCallback(() => {
+    diffResolverRef.current?.editSelection()
+  }, [])
+
+  const handleDeleteLocalDiff = useCallback(
+    (diffId: number) => {
+      setSegments((prev) => {
+        const next = removeLocalDiff(prev, diffId)
+        if (!next) return prev
+        persistSegments(next)
+        return next
+      })
+    },
+    [persistSegments]
   )
 
   const handleSubmit = useCallback(() => {
@@ -299,7 +370,7 @@ export function WorkspaceEditor() {
     )
   }, [task, currentUser, transcriptForSubmit, approveTask, clearAllDrafts, addToast, t])
 
-  const isHorizontalLayout = task?.orientation === 'portrait'
+  const isHorizontalLayout = task?.orientation === 'portrait' && !usesDiffResolver
 
   const handleMouseDown = useCallback(() => {
     setIsDragging(true)
@@ -389,7 +460,7 @@ export function WorkspaceEditor() {
 
           <div
             className={cn(
-              'overflow-hidden flex-shrink-0',
+              'relative z-0 overflow-hidden flex-shrink-0',
               isHorizontalLayout ? 'border-r border-border h-full' : 'border-b border-border w-full'
             )}
             style={
@@ -419,59 +490,78 @@ export function WorkspaceEditor() {
           </div>
 
           <div
+            ref={textPanelRef}
             className={cn(
-              'overflow-hidden bg-muted/30 flex-1 flex flex-col',
+              'relative z-0 overflow-hidden bg-muted/30 flex-1 flex flex-col min-h-0',
               isHorizontalLayout ? 'h-full' : 'w-full'
             )}
           >
-            <EditorToolbar
-              onRestoreOriginal={handleRestoreOriginal}
-              hasOriginalContent={
-                isAnnotator && !hasDiffs && originalOcrText.length > 0 && text !== originalOcrText
-              }
-              isDisabled={!canEdit || showOverlay}
-              showDiffShortcuts={hasDiffs}
-            />
-
-            {hasDiffs ? (
+            {usesDiffResolver ? (
               <DiffResolver
+                ref={diffResolverRef}
                 key={task.task_id}
                 segments={segments}
                 onResolveDiff={handleResolveDiff}
                 onUpdateCustomDraft={handleUpdateCustomDraft}
-                resolvedText={resolvedText}
+                onCreateLocalDiff={handleCreateLocalDiff}
+                onDeleteLocalDiff={handleDeleteLocalDiff}
+                onTextSelectionChange={setHasTextSelection}
+                previewText={previewText}
+                annotator1Transcript={task.task_transcript_1 ?? ''}
+                annotator2Transcript={task.task_transcript_2 ?? ''}
                 fontFamily={editorFontFamily}
                 fontSize={editorFontSize}
-              />
-            ) : isReviewerNoDiffs ? (
-              <ReviewerNoDiffPanel
-                transcript={text}
-                fontFamily={editorFontFamily}
-                fontSize={editorFontSize}
+                noAnnotatorDiffs={!hasAnnotatorDiffs}
+                isEmptyTranscript={!baseTranscript.trim()}
+                menuBoundaryRef={textPanelRef}
+                toolbar={
+                  <EditorToolbar
+                    onRestoreOriginal={handleRestoreOriginal}
+                    hasOriginalContent={false}
+                    isDisabled={!canEdit || showOverlay}
+                    showDiffShortcuts
+                    canEditSelection={hasTextSelection && canEdit && !showOverlay}
+                    onEditSelection={handleEditSelection}
+                  />
+                }
               />
             ) : (
-              <textarea
-                id="editor-textarea"
-                name="editor-textarea"
-                ref={textareaRef}
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                readOnly={!canEdit || showOverlay}
-                placeholder={t('editor.placeholder')}
-                className={cn(
-                  'flex-1 w-full resize-none bg-card p-5',
-                  'text-foreground placeholder:text-placeholder',
-                  'focus:outline-none focus:ring-0',
-                  'transition-all duration-200',
-                  (!canEdit || showOverlay) && 'cursor-default opacity-80'
-                )}
-                style={{
-                  fontFamily: FONT_FAMILY_MAP[editorFontFamily],
-                  fontSize: `${editorFontSize}px`,
-                  lineHeight: 1.6,
-                }}
-                spellCheck={false}
-              />
+              <>
+                <EditorToolbar
+                  onRestoreOriginal={handleRestoreOriginal}
+                  hasOriginalContent={
+                    isAnnotator &&
+                    originalOcrText.length > 0 &&
+                    text !== originalOcrText
+                  }
+                  isDisabled={!canEdit || showOverlay}
+                  showDiffShortcuts={false}
+                  canEditSelection={false}
+                  onEditSelection={handleEditSelection}
+                />
+                <textarea
+                  id="editor-textarea"
+                  name="editor-textarea"
+                  ref={textareaRef}
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  readOnly={!canEdit || showOverlay}
+                  placeholder={t('editor.placeholder')}
+                  className={cn(
+                    'flex-1 w-full resize-none bg-card p-5',
+                    'text-foreground placeholder:text-placeholder',
+                    'focus:outline-none focus:ring-0',
+                    'transition-all duration-200',
+                    (!canEdit || showOverlay) && 'cursor-default opacity-80'
+                  )}
+                  style={{
+                    fontFamily: FONT_FAMILY_MAP[editorFontFamily],
+                    fontSize: `${editorFontSize}px`,
+                    lineHeight: 1.6,
+                  }}
+                  spellCheck={false}
+                />
+              </>
             )}
           </div>
         </div>

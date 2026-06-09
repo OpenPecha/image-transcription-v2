@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Type, ALargeSmall, RotateCcw, GitCompare, PenLine, Keyboard, ChevronDown } from 'lucide-react'
+import { Type, ALargeSmall, RotateCcw, GitCompare, PenLine, Keyboard, ChevronDown, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -24,6 +24,8 @@ type EditorToolbarProps = {
   hasOriginalContent: boolean
   isDisabled?: boolean
   showDiffShortcuts?: boolean
+  canEditSelection?: boolean
+  onEditSelection?: () => void
   showDiff?: boolean
   onToggleDiff?: () => void
   canShowDiff?: boolean
@@ -45,6 +47,8 @@ export function EditorToolbar({
   hasOriginalContent,
   isDisabled = false,
   showDiffShortcuts = false,
+  canEditSelection = false,
+  onEditSelection,
   showDiff = false,
   onToggleDiff,
   canShowDiff = false,
@@ -174,6 +178,23 @@ export function EditorToolbar({
         </>
       )}
 
+      {showDiffShortcuts && onEditSelection && (
+        <>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onEditSelection}
+            disabled={!canEditSelection}
+            className="h-8 gap-1.5 px-2.5 text-[11px] font-medium text-muted-foreground hover:text-foreground disabled:opacity-40"
+            aria-label={t('diffResolver.editSelection')}
+          >
+            <Pencil className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            {t('diffResolver.editSelection')}
+          </Button>
+          <Separator orientation="vertical" className="h-5" />
+        </>
+      )}
+
       {showDiffShortcuts && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -193,8 +214,8 @@ export function EditorToolbar({
               {t('shortcuts.title')}
             </p>
             <div className="divide-y divide-border">
+              <ShortcutHint keys="E" label={t('shortcuts.editSelection')} />
               <ShortcutHint keys="1–9" label={t('shortcuts.selectOptions')} />
-              <ShortcutHint keys="C" label={t('shortcuts.selectOptionCustom')} />
               <ShortcutHint keys="← → / Tab" label={t('shortcuts.navigateDiffs')} />
               <ShortcutHint keys="Enter" label={t('shortcuts.confirmCustom')} />
               <ShortcutHint keys="Shift + Enter" label={t('shortcuts.customLineBreak')} />

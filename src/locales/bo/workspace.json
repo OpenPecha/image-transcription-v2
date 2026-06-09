@@ -86,12 +86,18 @@
     "optionA": "འདེམས་ཚན་ ཀ (s1)",
     "optionB": "འདེམས་ཚན་ ཁ (s2)",
     "optionPreset": "འདེམས་ཚན་ {{label}}",
-    "optionCustom": "འདེམས་ཚན་ ག (རང་འགྲིག)",
-    "customPlaceholder": "རང་འགྲིག་ཡི་གེ་འཇུག...",
+    "reviewerInput": "ལས་ཞིབ་པའི་ཡིག་འགྲིག",
+    "reviewerInputDuplicate": "Reviewer input must differ from all annotator options. Select the matching annotator instead.",
+    "customPlaceholder": "ལས་ཞིབ་པའི་ཡི་གེ་འཇུག...",
+    "editSelection": "འདེམས་ཟིན་པ་རྩོམ་སྒྲིག",
+    "deleteLocalDiff": "རང་འགྲིག་ཐག་བཅད་བསུབ།",
     "resolved": "ཐག་བཅད་ཟིན",
     "unresolvedCount": "ཐག་མ་ཆོད་པའི་ཁྱད་པར་ {{count}} འདུག",
     "allResolved": "ཁྱད་པར་ཚང་མ་ཐག་བཅད་ཟིན།",
-    "previewPlaceholder": "ཐག་བཅད་ཟིན་པའི་སྔོན་ལྟ་འདིར་འཆར་རྒྱུ་ཡིན།"
+    "previewPlaceholder": "ཐག་བཅད་ཟིན་པའི་སྔོན་ལྟ་འདིར་འཆར་རྒྱུ་ཡིན།",
+    "annotator1": "ཡིག་འགྲིག་པ་ 1",
+    "annotator2": "ཡིག་འགྲིག་པ་ 2",
+    "annotatorPlaceholder": "ཡིག་འགྲིག་མེད།"
   },
   "reviewer": {
     "pendingAlignment": "ཡིག་འགྲིག་པ་གཉིས་ཀྱི་བསྡུར་བའི་སྒུག་བཞིན་པ། ཡིག་འགྲིག་གཉིས་པོ་ཚང་མ་གྲུབ་རྗེས་ཁྱད་པར་འདིར་འཆར་རྒྱུ་ཡིན།",
@@ -104,8 +110,8 @@
     "toggleClose": "མྱུར་མཐེད་མཐེད་སྦ།",
     "selectOptionA": "འདེམས་ཚན་ ཀ འདེམས།",
     "selectOptionB": "འདེམས་ཚན་ ཁ འདེམས།",
-    "selectOptions": "འདེམས་ཚན་འདེམས།",
-    "selectOptionCustom": "རང་འགྲིག་ནང་འཇུག་ལ་དམིགས།",
+    "editSelection": "འདེམས་ཟིན་པའི་ཡི་གེ་རྩོམ་སྒྲིག",
+    "selectOptions": "འདེམས་ཚན་འདེམས། (1–N སྔོན་སྒྲིག མཐའ་མ་ལས་ཞིབ་ཡིག་འགྲིག)",
     "navigateDiffs": "ཁྱད་པར་བར་ནས་སྐྱོད།",
     "confirmCustom": "རང་འགྲིག་ནང་འཇུག་ངེས་པར་དུ་བཟོ།",
     "customLineBreak": "རང་འགྲིག་ནང་འཇུག་ནང་སྐད་ཆའི་མཐའ་བར།"
