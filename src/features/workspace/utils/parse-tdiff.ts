@@ -10,6 +10,15 @@ export type DiffSegment = {
   options: string[]
   selected: DiffSelection | null
   customDraft: string
+  /** True once the user explicitly confirms a choice; defaults start false. */
+  confirmed: boolean
+  isLocal?: boolean
+}
+
+/** Annotator option labels: A, B, C, … */
+export function getAnnotatorOptionLabel(index: number): string {
+  if (index < 0 || index > 25) return String(index + 1)
+  return String.fromCharCode(65 + index)
 }
 
 export type Segment = TextSegment | DiffSegment
@@ -21,28 +30,41 @@ function extractOptionsFromParsed(parsed: Record<string, unknown>): string[] {
     .map((key) => String(parsed[key] ?? ''))
 }
 
-export function getDiffResolvedValue(seg: DiffSegment): string {
-  if (!seg.selected) return ''
+export function getDiffProposedValue(seg: DiffSegment): string {
+  if (!seg.selected) return seg.options[0] ?? ''
   if (seg.selected.kind === 'preset') {
     return seg.options[seg.selected.index] ?? ''
   }
   return seg.selected.value
 }
 
+export function getDiffResolvedValue(seg: DiffSegment): string {
+  if (!isDiffResolved(seg)) return ''
+  return getDiffProposedValue(seg)
+}
+
+export function formatDiffDisplay(text: string): string {
+  if (text === '') return '∅'
+  return text.replace(/\n/g, ' ↵ ')
+}
+
+export function isDuplicateReviewerInput(
+  seg: DiffSegment,
+  value: string = seg.customDraft
+): boolean {
+  return seg.options.some((option) => option === value)
+}
+
 export function isDiffResolved(seg: DiffSegment): boolean {
-  if (!seg.selected) return false
-  if (seg.selected.kind === 'custom') {
-    return seg.selected.value.trim().length > 0
+  if (seg.confirmed !== true) return false
+  if (seg.selected?.kind === 'custom' && isDuplicateReviewerInput(seg)) {
+    return false
   }
-  return (
-    seg.selected.index >= 0 &&
-    seg.selected.index < seg.options.length &&
-    seg.options[seg.selected.index] !== undefined
-  )
+  return true
 }
 
 /**
- * Splits raw transcript into segments. Each diff starts with selected: null (unresolved).
+ * Splits raw transcript into segments. Each diff defaults to annotator A (preset index 0).
  */
 export function parseTDiff(raw: string): Segment[] {
   if (!raw) return []
@@ -75,12 +97,14 @@ export function parseTDiff(raw: string): Segment[] {
         .replace(/&amp;/g, '&')
 
       const parsed = JSON.parse(decodedJson) as Record<string, unknown>
+      const options = extractOptionsFromParsed(parsed)
       segments.push({
         type: 'diff',
         id: id++,
-        options: extractOptionsFromParsed(parsed),
-        selected: null,
-        customDraft: '',
+        options,
+        selected: options.length > 0 ? { kind: 'preset', index: 0 } : null,
+        customDraft: options[0] ?? '',
+        confirmed: false,
       })
     } catch {
       segments.push({
@@ -108,7 +132,19 @@ export function resolveSegments(segments: Segment[]): string {
       if (seg.type === 'text') {
         return seg.content
       }
-      return isDiffResolved(seg) ? getDiffResolvedValue(seg) : ''
+      return isDiffResolved(seg) ? getDiffProposedValue(seg) : ''
+    })
+    .join('')
+}
+
+/** Preview text including unconfirmed defaults (annotator A). */
+export function resolveSegmentsPreview(segments: Segment[]): string {
+  return segments
+    .map((seg) => {
+      if (seg.type === 'text') {
+        return seg.content
+      }
+      return getDiffProposedValue(seg)
     })
     .join('')
 }
@@ -117,7 +153,107 @@ export function allDiffsResolved(segments: Segment[]): boolean {
   return segments.every((seg) => seg.type !== 'diff' || isDiffResolved(seg))
 }
 
+export function getNextDiffId(segments: Segment[]): number {
+  return segments.reduce(
+    (max, seg) => (seg.type === 'diff' ? Math.max(max, seg.id) : max),
+    -1
+  ) + 1
+}
+
+export type LocalDiffTarget = {
+  segmentIndex: number
+  start: number
+  end: number
+  text: string
+}
+
+export function insertLocalDiff(
+  segments: Segment[],
+  target: LocalDiffTarget,
+  diffId: number
+): Segment[] | null {
+  const segment = segments[target.segmentIndex]
+  if (segment?.type !== 'text') return null
+
+  const selectedText = segment.content.slice(target.start, target.end)
+  if (!selectedText || selectedText !== target.text) return null
+
+  const before = segment.content.slice(0, target.start)
+  const after = segment.content.slice(target.end)
+  const diffSegment: DiffSegment = {
+    type: 'diff',
+    id: diffId,
+    options: [selectedText],
+    selected: { kind: 'custom', value: selectedText },
+    customDraft: selectedText,
+    confirmed: false,
+    isLocal: true,
+  }
+
+  const next: Segment[] = []
+  for (let i = 0; i < segments.length; i++) {
+    if (i !== target.segmentIndex) {
+      next.push(segments[i])
+      continue
+    }
+    if (before) next.push({ type: 'text', content: before })
+    next.push(diffSegment)
+    if (after) next.push({ type: 'text', content: after })
+  }
+
+  return next
+}
+
+function coalesceAdjacentText(segments: Segment[]): Segment[] {
+  const result: Segment[] = []
+  for (const seg of segments) {
+    const prev = result[result.length - 1]
+    if (seg.type === 'text' && prev?.type === 'text') {
+      result[result.length - 1] = { type: 'text', content: prev.content + seg.content }
+    } else {
+      result.push(seg)
+    }
+  }
+  return result
+}
+
+export function removeLocalDiff(segments: Segment[], diffId: number): Segment[] | null {
+  const index = segments.findIndex((seg) => seg.type === 'diff' && seg.id === diffId)
+  if (index === -1) return null
+
+  const diff = segments[index] as DiffSegment
+  if (!diff.isLocal) return null
+
+  const restored = diff.options[0] ?? ''
+  const result: Segment[] = []
+
+  for (let i = 0; i < segments.length; i++) {
+    if (i !== index) {
+      result.push(segments[i])
+      continue
+    }
+
+    const prev = result[result.length - 1]
+    const next = segments[i + 1]
+
+    if (prev?.type === 'text') {
+      result[result.length - 1] = { type: 'text', content: prev.content + restored }
+    } else {
+      result.push({ type: 'text', content: restored })
+    }
+
+    if (next?.type === 'text') {
+      const last = result[result.length - 1] as TextSegment
+      result[result.length - 1] = { type: 'text', content: last.content + next.content }
+      i++
+    }
+  }
+
+  return coalesceAdjacentText(result)
+}
+
 const DIFF_DRAFT_KEY_PREFIX = 'draft_task_diff_'
+const SEGMENT_DRAFT_KEY_PREFIX = 'draft_task_segments_'
 
 export function getDiffDraftKey(taskId: string): string {
   return `${DIFF_DRAFT_KEY_PREFIX}${taskId}`
@@ -137,6 +273,7 @@ type StoredDiffDraft =
 type DiffDraftEntry = {
   selected: DiffSelection | null
   customDraft: string
+  confirmed: boolean
 }
 
 function normalizeDraftSelection(value: unknown): DiffSelection | null {
@@ -163,19 +300,22 @@ function normalizeDraftSelection(value: unknown): DiffSelection | null {
 function normalizeDraftEntry(value: unknown): DiffDraftEntry {
   const selected = normalizeDraftSelection(value)
   if (value !== null && typeof value === 'object' && 'selected' in value) {
-    const record = value as { selected: unknown; customDraft?: unknown }
+    const record = value as { selected: unknown; customDraft?: unknown; confirmed?: unknown }
     const customDraft =
       typeof record.customDraft === 'string'
         ? record.customDraft
         : selected?.kind === 'custom'
           ? selected.value
           : ''
-    return { selected, customDraft }
+    const confirmed =
+      typeof record.confirmed === 'boolean' ? record.confirmed : selected !== null
+    return { selected, customDraft, confirmed }
   }
 
   return {
     selected,
     customDraft: selected?.kind === 'custom' ? selected.value : '',
+    confirmed: selected !== null,
   }
 }
 
@@ -206,6 +346,7 @@ export function saveDiffDraftSelections(taskId: string, segments: Segment[]): vo
         acc[seg.id] = {
           selected: seg.selected,
           customDraft: seg.customDraft,
+          confirmed: seg.confirmed,
         }
       }
       return acc
@@ -215,8 +356,42 @@ export function saveDiffDraftSelections(taskId: string, segments: Segment[]): vo
   localStorage.setItem(getDiffDraftKey(taskId), JSON.stringify(drafts))
 }
 
+export function saveSegmentDraft(
+  taskId: string,
+  segments: Segment[],
+  baseTranscript: string
+): void {
+  localStorage.setItem(
+    `${SEGMENT_DRAFT_KEY_PREFIX}${taskId}`,
+    JSON.stringify({ baseTranscript, segments })
+  )
+}
+
+export function loadSegmentDraft(
+  taskId: string,
+  baseTranscript: string
+): Segment[] | null {
+  try {
+    const stored = localStorage.getItem(`${SEGMENT_DRAFT_KEY_PREFIX}${taskId}`)
+    if (!stored) return null
+
+    const parsed = JSON.parse(stored) as { baseTranscript: string; segments: Segment[] }
+    if (parsed.baseTranscript !== baseTranscript) return null
+    return parsed.segments.map((seg) => {
+      if (seg.type !== 'diff') return seg
+      return {
+        ...seg,
+        confirmed: typeof seg.confirmed === 'boolean' ? seg.confirmed : true,
+      }
+    })
+  } catch {
+    return null
+  }
+}
+
 export function clearDiffDraft(taskId: string): void {
   localStorage.removeItem(getDiffDraftKey(taskId))
+  localStorage.removeItem(`${SEGMENT_DRAFT_KEY_PREFIX}${taskId}`)
 }
 
 export function applyDiffSelections(
@@ -228,11 +403,11 @@ export function applyDiffSelections(
       return seg
     }
 
-    const { selected, customDraft } = drafts[seg.id]
+    const { selected, customDraft, confirmed } = drafts[seg.id]
     if (selected?.kind === 'preset' && selected.index >= seg.options.length) {
-      return { ...seg, selected: null, customDraft }
+      return { ...seg, selected: null, customDraft, confirmed: false }
     }
 
-    return { ...seg, selected, customDraft }
+    return { ...seg, selected, customDraft, confirmed }
   })
 }

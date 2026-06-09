@@ -156,6 +156,10 @@ export interface AssignedTask {
   task_name: string
   task_url: string
   task_transcript: string
+  /** Annotator A full submission — read-only reference for reviewers. */
+  task_transcript_1?: string
+  /** Annotator B full submission — read-only reference for reviewers. */
+  task_transcript_2?: string
   initial_transcript?: string
   state: AssignedTaskState
   batch_name: string
