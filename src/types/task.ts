@@ -156,9 +156,9 @@ export interface AssignedTask {
   task_name: string
   task_url: string
   task_transcript: string
-  /** Annotator A full submission — read-only reference for reviewers. */
+  /** Slot 1 reference transcript — Annotator A (reviewers) or Reviewer A (final reviewer). */
   task_transcript_1?: string
-  /** Annotator B full submission — read-only reference for reviewers. */
+  /** Slot 2 reference transcript — Annotator B (reviewers) or Reviewer B (final reviewer). */
   task_transcript_2?: string
   initial_transcript?: string
   state: AssignedTaskState

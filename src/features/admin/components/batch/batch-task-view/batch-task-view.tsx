@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Download, Loader2 } from 'lucide-react'
@@ -46,6 +46,7 @@ export function BatchTaskView() {
   const { data: report, isLoading: isLoadingReport } = useGetBatchReport(batchId!, true)
   const { data: tasks = [], isLoading: isLoadingTasks } = useGetBatchTasks(batchId!, stateFilter)
   const restoreTask = useRestoreTask()
+  const restoringRef = useRef(false)
 
   // CSV download hook
   const { download: downloadCsv, isDownloading } = useBatchCsvDownload({
@@ -95,15 +96,22 @@ export function BatchTaskView() {
 
   // Handle restore
   const handleRestore = useCallback(() => {
-    if (!selectedTask || !batchId) return
+    if (!selectedTask || !batchId || restoringRef.current || restoreTask.isPending) return
+
+    const { task_id: taskId, task_name: taskName } = selectedTask
+    restoringRef.current = true
 
     restoreTask.mutate(
-      { taskId: selectedTask.task_id, batchId },
+      { taskId, batchId },
       {
         onSuccess: () => {
+          setSearchParams((prev) => {
+            prev.delete('task_id')
+            return prev
+          })
           addToast({
             title: t('batches.taskRestored'),
-            description: t('batches.taskRestoredDescription', { name: selectedTask.task_name }),
+            description: t('batches.taskRestoredDescription', { name: taskName }),
             variant: 'success',
           })
         },
@@ -114,9 +122,12 @@ export function BatchTaskView() {
             variant: 'destructive',
           })
         },
+        onSettled: () => {
+          restoringRef.current = false
+        },
       }
     )
-  }, [selectedTask, batchId, restoreTask, addToast, t])
+  }, [selectedTask, batchId, restoreTask, addToast, t, setSearchParams])
 
   // Get task count for current filter
   const getTaskCount = useCallback(

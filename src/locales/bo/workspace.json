@@ -16,7 +16,10 @@
     "trash": "བསུབ།",
     "approve": "ཆོག་མཆན།",
     "approving": "ཆོག་མཆན་སྤྲོད་བཞིན།...",
-    "reject": "དང་ལེན་མི་བྱེད།"
+    "reject": "དང་ལེན་མི་བྱེད།",
+    "rejectAnnotatorA": "Annotator A དང་ལེན་མི་བྱེད།",
+    "rejectAnnotatorB": "Annotator B དང་ལེན་མི་བྱེད།",
+    "rejectBoth": "Annotator གཉིས་ཀ དང་ལེན་མི་བྱེད།"
   },
   "loading": {
     "processing": "བཀོལ་སྤྱོད་བཞིན་པ།...",
@@ -39,7 +42,8 @@
     "approvedDescription": "ལས་ཀ་ལེགས་གྲུབ་ངང་ཆོག་མཆན་བྱིན།",
     "approveFailed": "ལས་ཀ་ཆོག་མཆན་སྤྲོད་མི་ཐུབ།",
     "rejected": "ལས་ཀ་དང་ལེན་མ་བྱས།",
-    "rejectFailed": "ལས་ཀ་དང་ལེན་མི་བྱེད་པ་མི་ཐུབ།"
+    "rejectFailed": "ལས་ཀ་དང་ལེན་མི་བྱེད་པ་མི་ཐུབ།",
+    "rejectedDescription": "\"{{taskName}}\" བསྐྱར་ཞིབ་ཆེད་སླར་འབུལ་བྱས།"
   },
   "dialogs": {
     "trash": {
@@ -56,6 +60,27 @@
       "title": "ལས་ཀ་ཆོག་མཆན།",
       "description": "\"{{taskName}}\" ལ་ཆོག་མཆན་སྤྲོད་རྒྱུ་ཡིན་ནམ།",
       "confirm": "ཆོག་མཆན།"
+    },
+    "reject": {
+      "choose": {
+        "title": "Annotator དང་ལེན་མི་བྱེད།",
+        "description": "\"{{taskName}}\" ཞིབ་ཆེད Annotator གང་ལ་སླར་འབུལ་རྒྱུ་འདེམས།"
+      },
+      "annotatorA": {
+        "title": "Annotator A དང་ལེན་མི་བྱེད།",
+        "description": "\"{{taskName}}\" Annotator A ལ་བསྐྱར་ཞིབ་ཆེད་སླར་འབུལ་རྒྱུ་ཡིན་ནམ།",
+        "confirm": "Annotator A དང་ལེན་མི་བྱེད།"
+      },
+      "annotatorB": {
+        "title": "Annotator B དང་ལེན་མི་བྱེད།",
+        "description": "\"{{taskName}}\" Annotator B ལ་བསྐྱར་ཞིབ་ཆེད་སླར་འབུལ་རྒྱུ་ཡིན་ནམ།",
+        "confirm": "Annotator B དང་ལེན་མི་བྱེད།"
+      },
+      "both": {
+        "title": "Annotator གཉིས་ཀ དང་ལེན་མི་བྱེད།",
+        "description": "\"{{taskName}}\" Annotator གཉིས་ཀ་ལ་བསྐྱར་ཞིབ་ཆེད་སླར་འབུལ་རྒྱུ་ཡིན་ནམ།",
+        "confirm": "Annotator གཉིས་ཀ དང་ལེན་མི་བྱེད།"
+      }
     },
     "unsaved": {
       "title": "མ་ཉར་བའི་བཅོས་བསྒྱུར།",
@@ -97,7 +122,9 @@
     "previewPlaceholder": "ཐག་བཅད་ཟིན་པའི་སྔོན་ལྟ་འདིར་འཆར་རྒྱུ་ཡིན།",
     "annotator1": "ཡིག་འགྲིག་པ་ 1",
     "annotator2": "ཡིག་འགྲིག་པ་ 2",
-    "annotatorPlaceholder": "ཡིག་འགྲིག་མེད།"
+    "reviewer1": "ཞིབ་བཤེར་པ་ 1",
+    "reviewer2": "ཞིབ་བཤེར་པ་ 2",
+    "referencePlaceholder": "ཡིག་འགྲིག་མེད།"
   },
   "reviewer": {
     "pendingAlignment": "ཡིག་འགྲིག་པ་གཉིས་ཀྱི་བསྡུར་བའི་སྒུག་བཞིན་པ། ཡིག་འགྲིག་གཉིས་པོ་ཚང་མ་གྲུབ་རྗེས་ཁྱད་པར་འདིར་འཆར་རྒྱུ་ཡིན།",

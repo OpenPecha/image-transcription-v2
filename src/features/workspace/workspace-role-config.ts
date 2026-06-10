@@ -1,10 +1,11 @@
+import type { AssignedTaskState } from '@/types'
 import {
   UserRole,
   ITV2_REVIEWER_APPROVABLE_STATES,
   ITV2_FINAL_REVIEWER_APPROVABLE_STATES,
+  isEditableTaskState,
   normalizeUserRole,
 } from '@/types'
-import type { AssignedTaskState } from '@/types'
 
 /**
  * When true, Final Reviewer mirrors Reviewer workspace behavior (UI + API).
@@ -24,11 +25,14 @@ export function isFinalReviewerRole(role: UserRole | string | undefined): boolea
   return normalizeUserRole(role) === UserRole.FinalReviewer
 }
 
+export type ReferenceTabsMode = 'none' | 'annotators' | 'reviewers'
+
 export interface WorkspaceRoleCaps {
   usesReviewerTranscript: boolean
   usesDiffResolver: boolean
   usesApproveAction: boolean
   dictionaryEnabled: boolean
+  referenceTabs: ReferenceTabsMode
 }
 
 const ANNOTATOR_CAPS: WorkspaceRoleCaps = {
@@ -36,6 +40,7 @@ const ANNOTATOR_CAPS: WorkspaceRoleCaps = {
   usesDiffResolver: false,
   usesApproveAction: false,
   dictionaryEnabled: true,
+  referenceTabs: 'none',
 }
 
 const REVIEWER_CAPS: WorkspaceRoleCaps = {
@@ -43,6 +48,7 @@ const REVIEWER_CAPS: WorkspaceRoleCaps = {
   usesDiffResolver: true,
   usesApproveAction: true,
   dictionaryEnabled: true,
+  referenceTabs: 'annotators',
 }
 
 /** Final Reviewer caps when FINAL_REVIEWER_SHARES_REVIEWER_WORKFLOW is false. */
@@ -51,6 +57,7 @@ const FINAL_REVIEWER_CAPS: WorkspaceRoleCaps = {
   usesDiffResolver: true,
   usesApproveAction: true,
   dictionaryEnabled: true,
+  referenceTabs: 'reviewers',
 }
 
 export function getWorkspaceRoleCaps(role: UserRole | string | undefined): WorkspaceRoleCaps | null {
@@ -58,9 +65,28 @@ export function getWorkspaceRoleCaps(role: UserRole | string | undefined): Works
   if (isAnnotatorRole(normalized)) return ANNOTATOR_CAPS
   if (isReviewerRole(normalized)) return REVIEWER_CAPS
   if (isFinalReviewerRole(normalized)) {
-    return FINAL_REVIEWER_SHARES_REVIEWER_WORKFLOW ? { ...REVIEWER_CAPS } : { ...FINAL_REVIEWER_CAPS }
+    return FINAL_REVIEWER_SHARES_REVIEWER_WORKFLOW
+      ? { ...REVIEWER_CAPS, referenceTabs: 'reviewers' }
+      : { ...FINAL_REVIEWER_CAPS }
   }
   return null
+}
+
+/** Whether the working area (diff resolver / editor) is editable for this role and state. */
+export function isWorkspaceEditable(
+  state: AssignedTaskState,
+  role: UserRole | string | undefined
+): boolean {
+  if (isEditableTaskState(state)) return true
+  return isFinalReviewerRole(role) && state === 'finalising'
+}
+
+/** Reviewer A only — reject annotator slot(s) while task is in reviewing. */
+export function canReviewerRejectAnnotators(
+  state: AssignedTaskState,
+  role: UserRole | string | undefined
+): boolean {
+  return isReviewerRole(role) && state === 'reviewing'
 }
 
 /** Whether a reviewer-role user may approve/submit the assigned task in this state. */

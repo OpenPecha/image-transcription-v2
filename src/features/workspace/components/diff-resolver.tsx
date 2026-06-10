@@ -32,6 +32,8 @@ import {
 import { parseTextSegmentSelection } from '../utils/text-selection'
 import { FONT_FAMILY_MAP } from './constant'
 import type { EditorFontFamily } from '@/store/use-ui-store'
+import { AnnotatorReadonlyPanel } from './annotator-readonly-panel'
+import type { ReferenceTabsMode } from '../workspace-role-config'
 
 export type DiffResolverHandle = {
   editSelection: () => boolean
@@ -45,8 +47,8 @@ interface DiffResolverProps {
   onDeleteLocalDiff: (diffId: number) => void
   onTextSelectionChange: (hasSelection: boolean) => void
   previewText: string
-  annotator1Transcript: string
-  annotator2Transcript: string
+  referenceTranscript1: string
+  referenceTranscript2: string
   fontFamily: EditorFontFamily
   fontSize: number
   /** True when the base transcript has no annotator `<t-diff>` tags. */
@@ -56,6 +58,8 @@ interface DiffResolverProps {
   toolbar?: ReactNode
   /** Keeps diff choice menus inside the text panel, below the image. */
   menuBoundaryRef?: RefObject<HTMLElement | null>
+  /** Read-only reference tabs: annotators (Reviewer A/B) or reviewers (Final Reviewer). */
+  referenceTabs?: ReferenceTabsMode
 }
 
 function ReadOnlyTranscriptPanel({
@@ -133,14 +137,15 @@ export const DiffResolver = forwardRef<DiffResolverHandle, DiffResolverProps>(fu
     onDeleteLocalDiff,
     onTextSelectionChange,
     previewText,
-    annotator1Transcript,
-    annotator2Transcript,
+    referenceTranscript1,
+    referenceTranscript2,
     fontFamily,
     fontSize,
     noAnnotatorDiffs = false,
     isEmptyTranscript = false,
     toolbar,
     menuBoundaryRef,
+    referenceTabs = 'none',
   },
   ref
 ) {
@@ -414,6 +419,11 @@ export const DiffResolver = forwardRef<DiffResolverHandle, DiffResolverProps>(fu
   )
 
   const resolvedFontFamily = FONT_FAMILY_MAP[fontFamily]
+  const showReferenceTabs = referenceTabs !== 'none'
+  const referenceTabLabels =
+    referenceTabs === 'reviewers'
+      ? { tab1: t('diffResolver.reviewer1'), tab2: t('diffResolver.reviewer2') }
+      : { tab1: t('diffResolver.annotator1'), tab2: t('diffResolver.annotator2') }
 
   return (
     <Tabs defaultValue="working" className="flex-1 flex flex-col h-full overflow-hidden bg-card">
@@ -425,12 +435,16 @@ export const DiffResolver = forwardRef<DiffResolverHandle, DiffResolverProps>(fu
           <TabsTrigger value="preview" className="text-xs">
             {t('diffResolver.preview')}
           </TabsTrigger>
-          <TabsTrigger value="annotator1" className="text-xs">
-            {t('diffResolver.annotator1')}
-          </TabsTrigger>
-          <TabsTrigger value="annotator2" className="text-xs">
-            {t('diffResolver.annotator2')}
-          </TabsTrigger>
+          {showReferenceTabs && (
+            <>
+              <TabsTrigger value="reference1" className="text-xs">
+                {referenceTabLabels.tab1}
+              </TabsTrigger>
+              <TabsTrigger value="reference2" className="text-xs">
+                {referenceTabLabels.tab2}
+              </TabsTrigger>
+            </>
+          )}
         </TabsList>
 
         <div className="shrink-0 text-xs font-semibold select-none">
@@ -725,29 +739,33 @@ export const DiffResolver = forwardRef<DiffResolverHandle, DiffResolverProps>(fu
         />
       </TabsContent>
 
-      <TabsContent
-        value="annotator1"
-        className="flex-1 flex flex-col min-h-0 m-0 border-none outline-none overflow-hidden"
-      >
-        <ReadOnlyTranscriptPanel
-          value={annotator1Transcript}
-          placeholder={t('diffResolver.annotatorPlaceholder')}
-          fontFamily={resolvedFontFamily}
-          fontSize={fontSize}
-        />
-      </TabsContent>
+      {showReferenceTabs && (
+        <>
+          <TabsContent
+            value="reference1"
+            className="flex-1 flex flex-col min-h-0 m-0 border-none outline-none overflow-hidden"
+          >
+            <AnnotatorReadonlyPanel
+              value={referenceTranscript1}
+              placeholder={t('diffResolver.referencePlaceholder')}
+              fontFamily={resolvedFontFamily}
+              fontSize={fontSize}
+            />
+          </TabsContent>
 
-      <TabsContent
-        value="annotator2"
-        className="flex-1 flex flex-col min-h-0 m-0 border-none outline-none overflow-hidden"
-      >
-        <ReadOnlyTranscriptPanel
-          value={annotator2Transcript}
-          placeholder={t('diffResolver.annotatorPlaceholder')}
-          fontFamily={resolvedFontFamily}
-          fontSize={fontSize}
-        />
-      </TabsContent>
+          <TabsContent
+            value="reference2"
+            className="flex-1 flex flex-col min-h-0 m-0 border-none outline-none overflow-hidden"
+          >
+            <AnnotatorReadonlyPanel
+              value={referenceTranscript2}
+              placeholder={t('diffResolver.referencePlaceholder')}
+              fontFamily={resolvedFontFamily}
+              fontSize={fontSize}
+            />
+          </TabsContent>
+        </>
+      )}
     </Tabs>
   )
 })
