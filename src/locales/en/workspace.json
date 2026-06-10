@@ -16,7 +16,10 @@
     "trash": "Trash",
     "approve": "Approve",
     "approving": "Approving...",
-    "reject": "Reject"
+    "reject": "Reject",
+    "rejectAnnotatorA": "Reject Annotator A",
+    "rejectAnnotatorB": "Reject Annotator B",
+    "rejectBoth": "Reject Both"
   },
   "loading": {
     "processing": "Processing...",
@@ -39,7 +42,8 @@
     "approvedDescription": "The task has been approved successfully",
     "approveFailed": "Failed to approve task",
     "rejected": "Task rejected",
-    "rejectFailed": "Failed to reject task"
+    "rejectFailed": "Failed to reject task",
+    "rejectedDescription": "\"{{taskName}}\" was sent back for rework."
   },
   "dialogs": {
     "trash": {
@@ -56,6 +60,27 @@
       "title": "Approve Task",
       "description": "Are you sure you want to approve \"{{taskName}}\"?",
       "confirm": "Approve"
+    },
+    "reject": {
+      "choose": {
+        "title": "Reject Annotators",
+        "description": "Choose which annotator to send \"{{taskName}}\" back for rework."
+      },
+      "annotatorA": {
+        "title": "Reject Annotator A",
+        "description": "Send \"{{taskName}}\" back to Annotator A for rework?",
+        "confirm": "Reject Annotator A"
+      },
+      "annotatorB": {
+        "title": "Reject Annotator B",
+        "description": "Send \"{{taskName}}\" back to Annotator B for rework?",
+        "confirm": "Reject Annotator B"
+      },
+      "both": {
+        "title": "Reject Both Annotators",
+        "description": "Send \"{{taskName}}\" back to both annotators for rework?",
+        "confirm": "Reject Both"
+      }
     },
     "unsaved": {
       "title": "Unsaved Changes",
@@ -97,7 +122,9 @@
     "previewPlaceholder": "Resolved preview will appear here...",
     "annotator1": "Annotator 1",
     "annotator2": "Annotator 2",
-    "annotatorPlaceholder": "No transcript available."
+    "reviewer1": "Reviewer 1",
+    "reviewer2": "Reviewer 2",
+    "referencePlaceholder": "No transcript available."
   },
   "reviewer": {
     "pendingAlignment": "Waiting for annotator comparison. The alignment diff will appear here once both annotations are ready.",

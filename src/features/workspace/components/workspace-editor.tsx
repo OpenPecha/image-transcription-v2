@@ -5,6 +5,8 @@ import { ImageCanvas } from './image-canvas'
 import { WorkspaceSidebar } from './workspace-sidebar'
 import { TrashConfirmationDialog } from './trash-confirmation-dialog'
 import { TaskConfirmationDialog } from './task-confirmation-dialog'
+import { RejectAnnotatorDialog } from './reject-annotator-dialog'
+import { RejectAnnotatorBar } from './reject-annotator-bar'
 import { EditorOverlay } from './editor-overlay'
 import { EditorToolbar } from './editor-toolbar'
 import { EmptyTasksState } from './empty-tasks-state'
@@ -40,11 +42,13 @@ import {
   useTrashTask,
   useApproveTask,
 } from '../api'
-import { loadNonEmptyTextDraft, useLocalDraft } from '../hooks'
+import { loadNonEmptyTextDraft, useLocalDraft, useRejectAnnotatorFlow } from '../hooks'
 import {
   getWorkspaceRoleCaps,
   isAnnotatorRole,
   isApprovableTaskState,
+  isWorkspaceEditable,
+  canReviewerRejectAnnotators,
 } from '../workspace-role-config'
 import { cn } from '@/lib/utils'
 import {
@@ -122,13 +126,35 @@ export function WorkspaceEditor() {
     enabled: !usesDiffResolver,
   })
 
-  const canEdit = task ? isEditableTaskState(task.state) : false
+  const clearAllDrafts = useCallback(() => {
+    clearDraft()
+    if (task) {
+      clearDiffDraft(task.task_id)
+    }
+  }, [clearDraft, task])
+
+  const canEdit = task ? isWorkspaceEditable(task.state, currentUser?.role) : false
+  const canRejectAnnotators =
+    !!task && canReviewerRejectAnnotators(task.state, currentUser?.role) && canEdit
+
+  const rejectFlow = useRejectAnnotatorFlow({
+    task,
+    userId: currentUser?.id,
+    enabled: canRejectAnnotators,
+    clearDrafts: clearAllDrafts,
+    addToast,
+  })
+
   const canActOnTask = task
     ? usesApproveAction
       ? isApprovableTaskState(task.state, currentUser?.role)
       : isEditableTaskState(task.state)
     : false
-  const isMutating = submitTask.isPending || trashTask.isPending || approveTask.isPending
+  const isMutating =
+    submitTask.isPending ||
+    trashTask.isPending ||
+    approveTask.isPending ||
+    rejectFlow.isRejecting
   const isLoadingNextTask = isFetching && !isLoading
   const showOverlay = isLoadingNextTask || isMutating
 
@@ -201,13 +227,6 @@ export function WorkspaceEditor() {
   const handleRestoreOriginal = useCallback(() => {
     setText(originalOcrText)
   }, [originalOcrText])
-
-  const clearAllDrafts = useCallback(() => {
-    clearDraft()
-    if (task) {
-      clearDiffDraft(task.task_id)
-    }
-  }, [clearDraft, task])
 
   const persistSegments = useCallback(
     (next: Segment[]) => {
@@ -507,12 +526,13 @@ export function WorkspaceEditor() {
                 onDeleteLocalDiff={handleDeleteLocalDiff}
                 onTextSelectionChange={setHasTextSelection}
                 previewText={previewText}
-                annotator1Transcript={task.task_transcript_1 ?? ''}
-                annotator2Transcript={task.task_transcript_2 ?? ''}
+                referenceTranscript1={task.task_transcript_1 ?? ''}
+                referenceTranscript2={task.task_transcript_2 ?? ''}
                 fontFamily={editorFontFamily}
                 fontSize={editorFontSize}
                 noAnnotatorDiffs={!hasAnnotatorDiffs}
                 isEmptyTranscript={!baseTranscript.trim()}
+                referenceTabs={roleCaps?.referenceTabs ?? 'none'}
                 menuBoundaryRef={textPanelRef}
                 toolbar={
                   <EditorToolbar
@@ -593,6 +613,13 @@ export function WorkspaceEditor() {
               </>
             )}
 
+            {canRejectAnnotators && (
+              <RejectAnnotatorBar
+                onOpen={rejectFlow.openRejectDialog}
+                disabled={showOverlay}
+              />
+            )}
+
             {usesApproveAction && (
               <Button
                 variant="success"
@@ -617,6 +644,8 @@ export function WorkspaceEditor() {
         isLoading={trashTask.isPending}
         taskName={task.task_name}
       />
+
+      <RejectAnnotatorDialog {...rejectFlow.dialogProps} />
 
       <TaskConfirmationDialog
         open={submitDialogOpen}
