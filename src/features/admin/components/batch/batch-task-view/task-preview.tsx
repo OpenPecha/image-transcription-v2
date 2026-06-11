@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import type { BatchTask } from '@/types'
+import { TaskParticipantsBar } from './task-participants-bar'
 
 interface TaskPreviewProps {
   task: BatchTask | null
@@ -94,7 +95,7 @@ export function TaskPreview({
               : { height: `${splitPosition}%` }
           }
         >
-          <ImageCanvas imageUrl={task.task_url} username={task.state !=='pending' ? task.username : undefined} />
+          <ImageCanvas imageUrl={task.task_url} />
         </div>
 
         {/* Resize Handle */}
@@ -147,20 +148,24 @@ export function TaskPreview({
       </div>
 
       {/* Footer with Restore Button */}
-      {canRestore && <div className="border-t border-border bg-card px-4 py-3 flex justify-center flex-shrink-0">
-        <Button
-          variant="outline"
-          onClick={onRestore}
-          disabled={!canRestore || isRestoring}
-          className={cn(
-            'min-w-[140px]',
-            canRestore && 'hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300'
-          )}
-        >
-          <RotateCcw className={cn('h-4 w-4 mr-2', isRestoring && 'animate-spin')} />
-          {isRestoring ? t('batches.restoring') : t('batches.restore')}
-        </Button>
-      </div>}
+      {canRestore && (
+        <div className="flex flex-shrink-0 justify-center border-t border-border bg-card px-4 py-3">
+          <Button
+            variant="outline"
+            onClick={onRestore}
+            disabled={!canRestore || isRestoring}
+            className={cn(
+              'min-w-[140px]',
+              canRestore && 'hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300'
+            )}
+          >
+            <RotateCcw className={cn('h-4 w-4 mr-2', isRestoring && 'animate-spin')} />
+            {isRestoring ? t('batches.restoring') : t('batches.restore')}
+          </Button>
+        </div>
+      )}
+
+      <TaskParticipantsBar task={task} />
     </div>
   )
 }

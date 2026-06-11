@@ -53,7 +53,14 @@ export interface BatchTask {
   task_transcript: string
   state: BatchTaskState
   orientation?: 'landscape' | 'portrait'
-  username?: string
+  /** @deprecated ITV2 uses slot-specific username fields below */
+  username?: string | null
+  annotator_a_username?: string | null
+  annotator_b_username?: string | null
+  reviewer_a_username?: string | null
+  reviewer_b_username?: string | null
+  final_reviewer_username?: string | null
+  trashed_by?: string | null
 }
 
 // Batch with stats from report endpoint

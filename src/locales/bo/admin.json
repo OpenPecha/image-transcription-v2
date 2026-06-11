@@ -101,6 +101,14 @@
     "noTranscript": "ཡི་གེ་བསྒྱུར་མེད།",
     "restoring": "སླར་གསོ་བཞིན།...",
     "restore": "སླར་གསོ།",
+    "trashedBy": "བསུབ་མཁན།",
+    "participants": {
+      "annotator1": "ཡིག་འགྲིག་པ་ ཀ",
+      "annotator2": "ཡིག་འགྲིག་པ་ ཁ",
+      "reviewer1": "ཞིབ་བཤེར་པ་ ཀ",
+      "reviewer2": "ཞིབ་བཤེར་པ་ ཁ",
+      "finalReviewer": "མཇུག་དམ་བཤེར་པ།"
+    },
     "filterByState": "གནས་སྟངས་ཀྱིས་ཚགས།",
     "downloadCsv": "CSV ཕབ་ལེན།",
     "downloadFailed": "ཕབ་ལེན་མ་ཐུབ།",
