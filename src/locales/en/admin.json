@@ -101,6 +101,14 @@
     "noTranscript": "No transcript available",
     "restoring": "Restoring...",
     "restore": "Restore",
+    "trashedBy": "Trashed by",
+    "participants": {
+      "annotator1": "Annotator 1",
+      "annotator2": "Annotator 2",
+      "reviewer1": "Reviewer 1",
+      "reviewer2": "Reviewer 2",
+      "finalReviewer": "Final Reviewer"
+    },
     "filterByState": "Filter by state",
     "downloadCsv": "Download CSV",
     "downloadFailed": "Download failed",
