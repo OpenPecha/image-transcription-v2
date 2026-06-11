@@ -2,7 +2,6 @@ import { Outlet } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/store/use-ui-store'
 import { Sidebar } from './sidebar'
-import { Toaster } from './toaster'
 
 export function MainLayout() {
   const { sidebarCollapsed } = useUIStore()
@@ -20,7 +19,6 @@ export function MainLayout() {
           <Outlet />
         </div>
       </main>
-      <Toaster />
     </div>
   )
 }

@@ -2,6 +2,7 @@ import { RouterProvider } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import { ThemeProvider } from '@/components/common'
+import { Toaster } from '@/components/layout/toaster'
 import { router } from '@/routes'
 import { AuthProvider, useAuth, WrongAppDialog, NoGroupDialog } from '@/features/auth'
 import { useLanguageSync } from '@/hooks'
@@ -61,6 +62,7 @@ function App() {
         <AuthProvider>
           <AuthGuard />
           <RouterProvider router={router} />
+          <Toaster />
         </AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>

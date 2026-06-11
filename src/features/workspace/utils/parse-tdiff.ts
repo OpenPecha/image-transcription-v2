@@ -10,6 +10,8 @@ export type DiffSegment = {
   options: string[]
   selected: DiffSelection | null
   customDraft: string
+  /** True once the reviewer manually edits the custom input field. */
+  customDraftEdited?: boolean
   /** True once the user explicitly confirms a choice; defaults start false. */
   confirmed: boolean
   isLocal?: boolean
@@ -104,6 +106,7 @@ export function parseTDiff(raw: string): Segment[] {
         options,
         selected: options.length > 0 ? { kind: 'preset', index: 0 } : null,
         customDraft: options[0] ?? '',
+        customDraftEdited: false,
         confirmed: false,
       })
     } catch {
@@ -186,6 +189,7 @@ export function insertLocalDiff(
     options: [selectedText],
     selected: { kind: 'custom', value: selectedText },
     customDraft: selectedText,
+    customDraftEdited: true,
     confirmed: false,
     isLocal: true,
   }
@@ -273,7 +277,20 @@ type StoredDiffDraft =
 type DiffDraftEntry = {
   selected: DiffSelection | null
   customDraft: string
+  customDraftEdited?: boolean
   confirmed: boolean
+}
+
+function inferCustomDraftEdited(
+  seg: DiffSegment,
+  selected: DiffSelection | null,
+  customDraft: string
+): boolean {
+  if (selected?.kind === 'custom') return true
+  if (selected?.kind === 'preset') {
+    return customDraft !== (seg.options[selected.index] ?? '')
+  }
+  return customDraft !== (seg.options[0] ?? '')
 }
 
 function normalizeDraftSelection(value: unknown): DiffSelection | null {
@@ -300,7 +317,12 @@ function normalizeDraftSelection(value: unknown): DiffSelection | null {
 function normalizeDraftEntry(value: unknown): DiffDraftEntry {
   const selected = normalizeDraftSelection(value)
   if (value !== null && typeof value === 'object' && 'selected' in value) {
-    const record = value as { selected: unknown; customDraft?: unknown; confirmed?: unknown }
+    const record = value as {
+      selected: unknown
+      customDraft?: unknown
+      customDraftEdited?: unknown
+      confirmed?: unknown
+    }
     const customDraft =
       typeof record.customDraft === 'string'
         ? record.customDraft
@@ -309,12 +331,15 @@ function normalizeDraftEntry(value: unknown): DiffDraftEntry {
           : ''
     const confirmed =
       typeof record.confirmed === 'boolean' ? record.confirmed : selected !== null
-    return { selected, customDraft, confirmed }
+    const customDraftEdited =
+      typeof record.customDraftEdited === 'boolean' ? record.customDraftEdited : undefined
+    return { selected, customDraft, customDraftEdited, confirmed }
   }
 
   return {
     selected,
     customDraft: selected?.kind === 'custom' ? selected.value : '',
+    customDraftEdited: selected?.kind === 'custom' ? true : undefined,
     confirmed: selected !== null,
   }
 }
@@ -346,6 +371,7 @@ export function saveDiffDraftSelections(taskId: string, segments: Segment[]): vo
         acc[seg.id] = {
           selected: seg.selected,
           customDraft: seg.customDraft,
+          customDraftEdited: seg.customDraftEdited,
           confirmed: seg.confirmed,
         }
       }
@@ -379,9 +405,15 @@ export function loadSegmentDraft(
     if (parsed.baseTranscript !== baseTranscript) return null
     return parsed.segments.map((seg) => {
       if (seg.type !== 'diff') return seg
+      const diff = seg as DiffSegment
+      const customDraftEdited =
+        typeof diff.customDraftEdited === 'boolean'
+          ? diff.customDraftEdited
+          : inferCustomDraftEdited(diff, diff.selected, diff.customDraft)
       return {
-        ...seg,
-        confirmed: typeof seg.confirmed === 'boolean' ? seg.confirmed : true,
+        ...diff,
+        customDraftEdited,
+        confirmed: typeof diff.confirmed === 'boolean' ? diff.confirmed : true,
       }
     })
   } catch {
@@ -403,11 +435,20 @@ export function applyDiffSelections(
       return seg
     }
 
-    const { selected, customDraft, confirmed } = drafts[seg.id]
+    const { selected, customDraft, confirmed, customDraftEdited } = drafts[seg.id]
     if (selected?.kind === 'preset' && selected.index >= seg.options.length) {
-      return { ...seg, selected: null, customDraft, confirmed: false }
+      return { ...seg, selected: null, customDraft, customDraftEdited: false, confirmed: false }
     }
 
-    return { ...seg, selected, customDraft, confirmed }
+    const resolvedCustomDraftEdited =
+      customDraftEdited ?? inferCustomDraftEdited(seg, selected, customDraft)
+
+    return {
+      ...seg,
+      selected,
+      customDraft,
+      customDraftEdited: resolvedCustomDraftEdited,
+      confirmed,
+    }
   })
 }

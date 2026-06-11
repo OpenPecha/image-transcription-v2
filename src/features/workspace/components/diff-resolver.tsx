@@ -664,12 +664,6 @@ export const DiffResolver = forwardRef<DiffResolverHandle, DiffResolverProps>(fu
                           'border-muted-foreground/40 bg-muted/60 text-muted-foreground'
                       )}
                       style={{ fontFamily: resolvedFontFamily }}
-                      onPointerDown={(e) => {
-                        e.preventDefault()
-                        const el = e.currentTarget
-                        el.focus()
-                        moveCaretToEnd(el)
-                      }}
                       onKeyDown={(e) => {
                         e.stopPropagation()
                         if (e.key === 'Enter' && !e.shiftKey) {

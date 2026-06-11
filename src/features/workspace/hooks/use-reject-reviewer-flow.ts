@@ -5,7 +5,7 @@ import type { RejectTarget } from '../types/reject-target'
 import { getApiErrorMessage } from '@/lib/get-api-error-message'
 import type { AssignedTask } from '@/types'
 
-interface UseRejectAnnotatorFlowOptions {
+interface UseRejectReviewerFlowOptions {
   task: AssignedTask | null | undefined
   userId: string | undefined
   enabled: boolean
@@ -17,13 +17,13 @@ interface UseRejectAnnotatorFlowOptions {
   }) => void
 }
 
-export function useRejectAnnotatorFlow({
+export function useRejectReviewerFlow({
   task,
   userId,
   enabled,
   clearDrafts,
   addToast,
-}: UseRejectAnnotatorFlowOptions) {
+}: UseRejectReviewerFlowOptions) {
   const { t } = useTranslation('workspace')
   const rejectTask = useRejectAnnotatorTask(userId)
   const [open, setOpen] = useState(false)
@@ -37,9 +37,12 @@ export function useRejectAnnotatorFlow({
     setOpen(false)
   }, [])
 
-  const handleOpenChange = useCallback((nextOpen: boolean) => {
-    if (!rejectTask.isPending) setOpen(nextOpen)
-  }, [rejectTask.isPending])
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (!rejectTask.isPending) setOpen(nextOpen)
+    },
+    [rejectTask.isPending]
+  )
 
   const selectRejectTarget = useCallback(
     (target: RejectTarget) => {
