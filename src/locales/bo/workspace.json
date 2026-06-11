@@ -19,7 +19,10 @@
     "reject": "དང་ལེན་མི་བྱེད།",
     "rejectAnnotatorA": "Annotator A དང་ལེན་མི་བྱེད།",
     "rejectAnnotatorB": "Annotator B དང་ལེན་མི་བྱེད།",
-    "rejectBoth": "Annotator གཉིས་ཀ དང་ལེན་མི་བྱེད།"
+    "rejectBoth": "Annotator གཉིས་ཀ དང་ལེན་མི་བྱེད།",
+    "rejectReviewerA": "Reviewer A དང་ལེན་མི་བྱེད།",
+    "rejectReviewerB": "Reviewer B དང་ལེན་མི་བྱེད།",
+    "rejectBothReviewers": "Reviewer གཉིས་ཀ དང་ལེན་མི་བྱེད།"
   },
   "loading": {
     "processing": "བཀོལ་སྤྱོད་བཞིན་པ།...",
@@ -65,6 +68,10 @@
       "choose": {
         "title": "Annotator དང་ལེན་མི་བྱེད།",
         "description": "\"{{taskName}}\" ཞིབ་ཆེད Annotator གང་ལ་སླར་འབུལ་རྒྱུ་འདེམས།"
+      },
+      "chooseReviewers": {
+        "title": "Reviewer དང་ལེན་མི་བྱེད།",
+        "description": "\"{{taskName}}\" ཞིབ་ཆེད Reviewer གང་ལ་སླར་འབུལ་རྒྱུ་འདེམས།"
       },
       "annotatorA": {
         "title": "Annotator A དང་ལེན་མི་བྱེད།",

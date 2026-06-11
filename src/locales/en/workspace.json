@@ -19,7 +19,10 @@
     "reject": "Reject",
     "rejectAnnotatorA": "Reject Annotator A",
     "rejectAnnotatorB": "Reject Annotator B",
-    "rejectBoth": "Reject Both"
+    "rejectBoth": "Reject Both",
+    "rejectReviewerA": "Reject Reviewer A",
+    "rejectReviewerB": "Reject Reviewer B",
+    "rejectBothReviewers": "Reject Both Reviewers"
   },
   "loading": {
     "processing": "Processing...",
@@ -65,6 +68,10 @@
       "choose": {
         "title": "Reject Annotators",
         "description": "Choose which annotator to send \"{{taskName}}\" back for rework."
+      },
+      "chooseReviewers": {
+        "title": "Reject Reviewers",
+        "description": "Choose which reviewer to send \"{{taskName}}\" back for rework."
       },
       "annotatorA": {
         "title": "Reject Annotator A",

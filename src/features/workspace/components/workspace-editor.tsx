@@ -6,6 +6,7 @@ import { WorkspaceSidebar } from './workspace-sidebar'
 import { TrashConfirmationDialog } from './trash-confirmation-dialog'
 import { TaskConfirmationDialog } from './task-confirmation-dialog'
 import { RejectAnnotatorDialog } from './reject-annotator-dialog'
+import { RejectReviewerDialog } from './reject-reviewer-dialog'
 import { RejectAnnotatorBar } from './reject-annotator-bar'
 import { EditorOverlay } from './editor-overlay'
 import { EditorToolbar } from './editor-toolbar'
@@ -42,13 +43,14 @@ import {
   useTrashTask,
   useApproveTask,
 } from '../api'
-import { loadNonEmptyTextDraft, useLocalDraft, useRejectAnnotatorFlow } from '../hooks'
+import { loadNonEmptyTextDraft, useLocalDraft, useRejectAnnotatorFlow, useRejectReviewerFlow } from '../hooks'
 import {
   getWorkspaceRoleCaps,
   isAnnotatorRole,
   isApprovableTaskState,
   isWorkspaceEditable,
   canReviewerRejectAnnotators,
+  canFinalReviewerRejectReviewers,
 } from '../workspace-role-config'
 import { cn } from '@/lib/utils'
 import {
@@ -136,11 +138,21 @@ export function WorkspaceEditor() {
   const canEdit = task ? isWorkspaceEditable(task.state, currentUser?.role) : false
   const canRejectAnnotators =
     !!task && canReviewerRejectAnnotators(task.state, currentUser?.role) && canEdit
+  const canRejectReviewers =
+    !!task && canFinalReviewerRejectReviewers(task.state, currentUser?.role) && canEdit
 
-  const rejectFlow = useRejectAnnotatorFlow({
+  const rejectAnnotatorFlow = useRejectAnnotatorFlow({
     task,
     userId: currentUser?.id,
     enabled: canRejectAnnotators,
+    clearDrafts: clearAllDrafts,
+    addToast,
+  })
+
+  const rejectReviewerFlow = useRejectReviewerFlow({
+    task,
+    userId: currentUser?.id,
+    enabled: canRejectReviewers,
     clearDrafts: clearAllDrafts,
     addToast,
   })
@@ -154,7 +166,8 @@ export function WorkspaceEditor() {
     submitTask.isPending ||
     trashTask.isPending ||
     approveTask.isPending ||
-    rejectFlow.isRejecting
+    rejectAnnotatorFlow.isRejecting ||
+    rejectReviewerFlow.isRejecting
   const isLoadingNextTask = isFetching && !isLoading
   const showOverlay = isLoadingNextTask || isMutating
 
@@ -249,7 +262,7 @@ export function WorkspaceEditor() {
             return seg
           }
           const customDraft =
-            selected.kind === 'preset'
+            selected.kind === 'preset' && !seg.customDraftEdited
               ? (seg.options[selected.index] ?? seg.customDraft)
               : seg.customDraft
           return { ...seg, selected, customDraft, confirmed: true }
@@ -269,6 +282,7 @@ export function WorkspaceEditor() {
             ? {
                 ...seg,
                 customDraft: value,
+                customDraftEdited: true,
                 selected: { kind: 'custom' as const, value },
                 confirmed: false,
               }
@@ -615,7 +629,14 @@ export function WorkspaceEditor() {
 
             {canRejectAnnotators && (
               <RejectAnnotatorBar
-                onOpen={rejectFlow.openRejectDialog}
+                onOpen={rejectAnnotatorFlow.openRejectDialog}
+                disabled={showOverlay}
+              />
+            )}
+
+            {canRejectReviewers && (
+              <RejectAnnotatorBar
+                onOpen={rejectReviewerFlow.openRejectDialog}
                 disabled={showOverlay}
               />
             )}
@@ -645,7 +666,8 @@ export function WorkspaceEditor() {
         taskName={task.task_name}
       />
 
-      <RejectAnnotatorDialog {...rejectFlow.dialogProps} />
+      <RejectAnnotatorDialog {...rejectAnnotatorFlow.dialogProps} />
+      <RejectReviewerDialog {...rejectReviewerFlow.dialogProps} />
 
       <TaskConfirmationDialog
         open={submitDialogOpen}

@@ -89,6 +89,14 @@ export function canReviewerRejectAnnotators(
   return isReviewerRole(role) && state === 'reviewing'
 }
 
+/** Final Reviewer — reject reviewer slot(s) while task is in finalising. */
+export function canFinalReviewerRejectReviewers(
+  state: AssignedTaskState,
+  role: UserRole | string | undefined
+): boolean {
+  return isFinalReviewerRole(role) && state === 'finalising'
+}
+
 /** Whether a reviewer-role user may approve/submit the assigned task in this state. */
 export function isApprovableTaskState(
   state: AssignedTaskState,
