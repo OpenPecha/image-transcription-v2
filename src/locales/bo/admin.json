@@ -103,10 +103,10 @@
     "restore": "སླར་གསོ།",
     "trashedBy": "བསུབ་མཁན།",
     "participants": {
-      "annotator1": "ཡིག་འགྲིག་པ་ 1",
-      "annotator2": "ཡིག་འགྲིག་པ་ 2",
-      "reviewer1": "ཞིབ་བཤེར་པ་ 1",
-      "reviewer2": "ཞིབ་བཤེར་པ་ 2",
+      "annotator1": "ཡིག་འགྲིག་པ་ ཀ",
+      "annotator2": "ཡིག་འགྲིག་པ་ ཁ",
+      "reviewer1": "ཞིབ་བཤེར་པ་ ཀ",
+      "reviewer2": "ཞིབ་བཤེར་པ་ ཁ",
       "finalReviewer": "མཇུག་དམ་བཤེར་པ།"
     },
     "filterByState": "གནས་སྟངས་ཀྱིས་ཚགས།",

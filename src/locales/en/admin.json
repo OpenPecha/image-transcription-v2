@@ -103,10 +103,10 @@
     "restore": "Restore",
     "trashedBy": "Trashed by",
     "participants": {
-      "annotator1": "Annotator 1",
-      "annotator2": "Annotator 2",
-      "reviewer1": "Reviewer 1",
-      "reviewer2": "Reviewer 2",
+      "annotator1": "Annotator A",
+      "annotator2": "Annotator B",
+      "reviewer1": "Reviewer A",
+      "reviewer2": "Reviewer B",
       "finalReviewer": "Final Reviewer"
     },
     "filterByState": "Filter by state",
