@@ -64,6 +64,11 @@
   "brand": {
     "appName": "TextAlign",
     "tagline": "Image Text Aligner"
+  },
+  "fileName": {
+    "expand": "Show full file name",
+    "collapse": "Collapse file name",
+    "copy": "Copy file name"
   }
 }
 

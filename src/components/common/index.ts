@@ -5,4 +5,5 @@ export * from './sidebar-settings-panel'
 export * from './status-badge'
 export * from './theme-provider'
 export * from './theme-toggle'
+export * from './task-file-name'
 

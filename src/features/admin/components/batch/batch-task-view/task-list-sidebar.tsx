@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { TaskFileName } from '@/components/common'
 import { cn } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { BATCH_STATS_CONFIG, type BatchTask, type BatchTaskState } from '@/types'
@@ -79,7 +80,15 @@ function TaskListItem({ task, isSelected, onClick }: TaskListItemProps) {
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="truncate font-medium">{task.task_name}</span>
+        <TaskFileName
+          fileName={task.task_name}
+          className="flex-1 min-w-0"
+          textClassName="text-foreground"
+          expanded={isSelected}
+          showCopyButton={isSelected}
+          showExpandToggle={false}
+          enableContextMenu
+        />
         <span
           className={cn(
             'shrink-0 text-[10px] px-1.5 py-0.5 rounded font-medium',

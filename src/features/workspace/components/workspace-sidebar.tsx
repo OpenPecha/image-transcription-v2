@@ -7,7 +7,7 @@ import { useAuth } from '@/features/auth'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
-import { ThemeToggle, LanguageToggle } from '@/components/common'
+import { ThemeToggle, LanguageToggle, TaskFileName } from '@/components/common'
 import type { AssignedTask } from '@/types'
 
 interface WorkspaceSidebarProps {
@@ -129,9 +129,13 @@ export function WorkspaceSidebar({
               <div className="flex items-start gap-2 p-3 rounded-lg bg-sidebar-accent">
                 <FileText className="h-4 w-4 shrink-0 text-primary mt-0.5" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-sidebar-foreground break-all truncate">
-                    {task.task_name}
-                  </p>
+                  <TaskFileName
+                    fileName={task.task_name}
+                    textClassName="text-sidebar-foreground"
+                    expanded
+                    showExpandToggle={false}
+                    enableContextMenu
+                  />
                   <div className={cn(
                     'flex items-center gap-1 mt-1 text-xs',
                     getStateColor(task.state)
