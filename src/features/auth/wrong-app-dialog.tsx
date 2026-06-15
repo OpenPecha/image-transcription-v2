@@ -1,4 +1,5 @@
-import { AlertTriangle, ArrowRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { AlertTriangle, ArrowRight, LogOut } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -8,12 +9,16 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { useAuth } from './use-auth'
 
 interface WrongAppDialogProps {
   url: string | null
 }
 
 export function WrongAppDialog({ url }: WrongAppDialogProps) {
+  const { t } = useTranslation('common')
+  const { logout } = useAuth()
+
   const handleRedirect = () => {
     if (url) {
       window.location.href = url
@@ -48,8 +53,14 @@ export function WrongAppDialog({ url }: WrongAppDialogProps) {
           </span>
         </div>
 
-        <DialogFooter className="sm:justify-center">
-          {url ? (
+        {!url && (
+          <p className="text-xs text-destructive font-medium text-center">
+            Please contact your administrator to configure your application access.
+          </p>
+        )}
+
+        <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+          {url && (
             <Button
               onClick={handleRedirect}
               variant="destructive"
@@ -58,11 +69,15 @@ export function WrongAppDialog({ url }: WrongAppDialogProps) {
               Go to Correct Tool
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-          ) : (
-            <p className="text-xs text-destructive font-medium">
-              Please contact your administrator to configure your application access.
-            </p>
           )}
+          <Button
+            onClick={logout}
+            variant="outline"
+            className="w-full sm:w-auto"
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            {t('actions.signOut')}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

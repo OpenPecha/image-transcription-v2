@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { ArrowRight, Layers } from 'lucide-react'
+import { TaskFileName } from '@/components/common'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -37,9 +38,10 @@ export function TaskCard({ task, onContinue }: TaskCardProps) {
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <p className="font-semibold truncate" title={task.task_name}>
-              {task.task_name}
-            </p>
+            <TaskFileName
+              fileName={task.task_name}
+              textClassName="font-semibold text-foreground"
+            />
             <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
               <span className="flex items-center gap-1.5">
                 <Layers className="h-4 w-4" />
