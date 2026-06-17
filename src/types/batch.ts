@@ -63,6 +63,97 @@ export interface BatchTask {
   trashed_by?: string | null
 }
 
+// Task returned from application-wide task search
+export interface BatchTaskSearchResult {
+  task_id: string
+  task_name: string
+  task_url: string
+  orientation?: 'landscape' | 'portrait'
+  state: BatchTaskState
+  annotator_a_username?: string | null
+  annotator_b_username?: string | null
+  reviewer_a_username?: string | null
+  reviewer_b_username?: string | null
+  final_reviewer_username?: string | null
+  trashed_by?: string | null
+  batch_id: string
+  batch_name: string
+  initial_transcript: string | null
+  annotation_transcript_order_1: string | null
+  annotation_transcript_order_2: string | null
+  reviewed_transcript_order_1: string | null
+  reviewed_transcript_order_2: string | null
+  finalised_transcript: string | null
+}
+
+export type BatchTaskParticipantRole =
+  | 'annotator_a'
+  | 'annotator_b'
+  | 'reviewer_a'
+  | 'reviewer_b'
+  | 'final_reviewer'
+
+export const BATCH_TASK_PARTICIPANT_ROLE_LABEL_KEYS = {
+  annotator_a: 'annotator1',
+  annotator_b: 'annotator2',
+  reviewer_a: 'reviewer1',
+  reviewer_b: 'reviewer2',
+  final_reviewer: 'finalReviewer',
+} as const satisfies Record<
+  BatchTaskParticipantRole,
+  'annotator1' | 'annotator2' | 'reviewer1' | 'reviewer2' | 'finalReviewer'
+>
+
+const PARTICIPANT_TRANSCRIPT_PRIORITY: BatchTaskParticipantRole[] = [
+  'final_reviewer',
+  'reviewer_b',
+  'reviewer_a',
+  'annotator_b',
+  'annotator_a',
+]
+
+/** Returns the transcript submitted by a specific participant role. */
+export function getBatchTaskSearchParticipantTranscript(
+  task: BatchTaskSearchResult,
+  role: BatchTaskParticipantRole
+): string | null {
+  const transcriptByRole: Record<BatchTaskParticipantRole, string | null> = {
+    annotator_a: task.annotation_transcript_order_1,
+    annotator_b: task.annotation_transcript_order_2,
+    reviewer_a: task.reviewed_transcript_order_1,
+    reviewer_b: task.reviewed_transcript_order_2,
+    final_reviewer: task.finalised_transcript,
+  }
+
+  const value = transcriptByRole[role]?.trim()
+  return value || null
+}
+
+/** Returns the most progressed participant role that has a transcript. */
+export function getDefaultBatchTaskSearchParticipantRole(
+  task: BatchTaskSearchResult
+): BatchTaskParticipantRole | null {
+  for (const role of PARTICIPANT_TRANSCRIPT_PRIORITY) {
+    if (getBatchTaskSearchParticipantTranscript(task, role)) {
+      return role
+    }
+  }
+
+  return null
+}
+
+/** Returns the most progressed transcript available for a search result. */
+export function getBatchTaskSearchTranscript(
+  task: BatchTaskSearchResult
+): string | null {
+  const defaultRole = getDefaultBatchTaskSearchParticipantRole(task)
+  if (defaultRole) {
+    return getBatchTaskSearchParticipantTranscript(task, defaultRole)
+  }
+
+  return task.initial_transcript?.trim() || null
+}
+
 // Batch with stats from report endpoint
 export interface BatchReport extends Batch {
   total_tasks: number

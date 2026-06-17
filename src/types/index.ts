@@ -43,7 +43,14 @@ export type {
 export type { Group, GroupWithUsers, GroupRequest, GroupUpdateRequest } from './group'
 
 // Batch types
-export { BATCH_STATS_CONFIG, WORKFLOW_STATS } from './batch'
+export {
+  BATCH_STATS_CONFIG,
+  BATCH_TASK_PARTICIPANT_ROLE_LABEL_KEYS,
+  WORKFLOW_STATS,
+  getBatchTaskSearchTranscript,
+  getBatchTaskSearchParticipantTranscript,
+  getDefaultBatchTaskSearchParticipantRole,
+} from './batch'
 export type {
   Batch,
   BatchReport,
@@ -52,6 +59,8 @@ export type {
   BatchUploadRequest,
   BatchStatKey,
   BatchTask,
+  BatchTaskParticipantRole,
+  BatchTaskSearchResult,
   BatchTaskState,
   BatchExportTask,
   BatchExportResponse,

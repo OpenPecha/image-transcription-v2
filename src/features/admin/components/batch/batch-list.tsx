@@ -13,6 +13,7 @@ import { APPLICATION_NAME } from '@/lib/constant'
 import { ApplicationBatchSummary } from './application-batch-summary'
 import { BatchItem, BatchItemSkeleton } from './batch-item'
 import { BatchUploadDialog } from './batch-upload-dialog'
+import { BatchTaskSearch } from './batch-task-search'
 
 export function BatchList() {
   const { t } = useTranslation('admin')
@@ -24,17 +25,18 @@ export function BatchList() {
   return (
     <>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              {t('batches.cardTitle')}
-            </CardTitle>
+        <CardHeader className="flex flex-col gap-4 space-y-0 pb-4 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5" />
+            {t('batches.cardTitle')}
+          </CardTitle>
+          <div className="flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+            <BatchTaskSearch />
+            <Button onClick={() => setUploadDialogOpen(true)} size="sm" className="shrink-0">
+              <Upload className="mr-2 h-4 w-4" />
+              {t('batches.uploadBatch')}
+            </Button>
           </div>
-          <Button onClick={() => setUploadDialogOpen(true)} size="sm">
-            <Upload className="mr-2 h-4 w-4" />
-            {t('batches.uploadBatch')}
-          </Button>
         </CardHeader>
         <CardContent className="pt-0">
           <div className="mb-6 space-y-4">

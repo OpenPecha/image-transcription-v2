@@ -1,9 +1,22 @@
 import { useTranslation } from 'react-i18next'
-import type { BatchTask } from '@/types'
+import { cn } from '@/lib/utils'
+import type { BatchTask, BatchTaskParticipantRole } from '@/types'
+
+type TaskParticipantInfo = Pick<
+  BatchTask,
+  | 'state'
+  | 'trashed_by'
+  | 'annotator_a_username'
+  | 'annotator_b_username'
+  | 'reviewer_a_username'
+  | 'reviewer_b_username'
+  | 'final_reviewer_username'
+>
 
 interface ParticipantSlot {
   label: string
   value: string
+  role: BatchTaskParticipantRole
 }
 
 interface ParticipantRows {
@@ -16,7 +29,7 @@ function hasParticipantName(value: string | null | undefined): value is string {
 }
 
 function buildParticipantRows(
-  task: BatchTask,
+  task: TaskParticipantInfo,
   labels: {
     annotator1: string
     annotator2: string
@@ -29,53 +42,156 @@ function buildParticipantRows(
   const row2: ParticipantSlot[] = []
 
   if (hasParticipantName(task.annotator_a_username)) {
-    row1.push({ label: labels.annotator1, value: task.annotator_a_username })
+    row1.push({
+      label: labels.annotator1,
+      value: task.annotator_a_username,
+      role: 'annotator_a',
+    })
   }
   if (hasParticipantName(task.reviewer_a_username)) {
-    row1.push({ label: labels.reviewer1, value: task.reviewer_a_username })
+    row1.push({
+      label: labels.reviewer1,
+      value: task.reviewer_a_username,
+      role: 'reviewer_a',
+    })
   }
   if (hasParticipantName(task.final_reviewer_username)) {
-    row1.push({ label: labels.finalReviewer, value: task.final_reviewer_username })
+    row1.push({
+      label: labels.finalReviewer,
+      value: task.final_reviewer_username,
+      role: 'final_reviewer',
+    })
   }
 
   if (hasParticipantName(task.annotator_b_username)) {
-    row2.push({ label: labels.annotator2, value: task.annotator_b_username })
+    row2.push({
+      label: labels.annotator2,
+      value: task.annotator_b_username,
+      role: 'annotator_b',
+    })
   }
   if (hasParticipantName(task.reviewer_b_username)) {
-    row2.push({ label: labels.reviewer2, value: task.reviewer_b_username })
+    row2.push({
+      label: labels.reviewer2,
+      value: task.reviewer_b_username,
+      role: 'reviewer_b',
+    })
   }
 
   if (row1.length === 0 && row2.length === 0) return null
   return { row1, row2 }
 }
 
-function ParticipantCell({ label, value }: ParticipantSlot) {
-  return (
-    <div className="min-w-0">
+interface ParticipantCellProps extends ParticipantSlot {
+  isSelected?: boolean
+  isInteractive?: boolean
+  hasTranscript?: boolean
+  onSelect?: () => void
+}
+
+function ParticipantCell({
+  label,
+  value,
+  isSelected,
+  isInteractive,
+  hasTranscript,
+  onSelect,
+}: ParticipantCellProps) {
+  const content = (
+    <>
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="truncate text-sm font-medium text-foreground">{value}</p>
-    </div>
+      <p
+        className={cn(
+          'truncate text-sm font-medium',
+          hasTranscript === false ? 'text-muted-foreground' : 'text-foreground'
+        )}
+      >
+        {value}
+      </p>
+    </>
+  )
+
+  if (!isInteractive || !onSelect) {
+    return <div className="min-w-0">{content}</div>
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      disabled={!hasTranscript}
+      className={cn(
+        'min-w-0 rounded-md px-2 py-1 text-left transition-colors',
+        hasTranscript && 'cursor-pointer hover:bg-accent',
+        !hasTranscript && 'cursor-default opacity-60',
+        isSelected && hasTranscript && 'bg-accent ring-1 ring-ring'
+      )}
+    >
+      {content}
+    </button>
   )
 }
 
-function ParticipantRow({ slots }: { slots: ParticipantSlot[] }) {
+interface ParticipantRowProps {
+  slots: ParticipantSlot[]
+  selectedRole?: BatchTaskParticipantRole | null
+  isInteractive?: boolean
+  getTranscriptForRole?: (role: BatchTaskParticipantRole) => string | null
+  onSelectRole?: (role: BatchTaskParticipantRole) => void
+}
+
+function ParticipantRow({
+  slots,
+  selectedRole,
+  isInteractive,
+  getTranscriptForRole,
+  onSelectRole,
+}: ParticipantRowProps) {
   if (slots.length === 0) return null
 
   return (
     <div className="grid grid-cols-3 gap-x-6 gap-y-1">
-      {slots.map((slot) => (
-        <ParticipantCell key={slot.label} label={slot.label} value={slot.value} />
-      ))}
+      {slots.map((slot) => {
+        const hasTranscript = getTranscriptForRole
+          ? Boolean(getTranscriptForRole(slot.role))
+          : undefined
+
+        return (
+          <ParticipantCell
+            key={slot.role}
+            label={slot.label}
+            value={slot.value}
+            role={slot.role}
+            isSelected={selectedRole === slot.role}
+            isInteractive={isInteractive}
+            hasTranscript={hasTranscript}
+            onSelect={
+              onSelectRole && hasTranscript
+                ? () => onSelectRole(slot.role)
+                : undefined
+            }
+          />
+        )
+      })}
     </div>
   )
 }
 
 interface TaskParticipantsBarProps {
-  task: BatchTask
+  task: TaskParticipantInfo
+  selectedRole?: BatchTaskParticipantRole | null
+  onSelectRole?: (role: BatchTaskParticipantRole) => void
+  getTranscriptForRole?: (role: BatchTaskParticipantRole) => string | null
 }
 
-export function TaskParticipantsBar({ task }: TaskParticipantsBarProps) {
+export function TaskParticipantsBar({
+  task,
+  selectedRole,
+  onSelectRole,
+  getTranscriptForRole,
+}: TaskParticipantsBarProps) {
   const { t } = useTranslation('admin')
+  const isInteractive = Boolean(onSelectRole && getTranscriptForRole)
 
   if (task.state === 'trashed') {
     if (!hasParticipantName(task.trashed_by)) return null
@@ -102,8 +218,25 @@ export function TaskParticipantsBar({ task }: TaskParticipantsBarProps) {
 
   return (
     <div className="flex-shrink-0 space-y-2 border-t border-border bg-muted/30 px-4 py-2.5">
-      <ParticipantRow slots={rows.row1} />
-      <ParticipantRow slots={rows.row2} />
+      {isInteractive && (
+        <p className="text-xs text-muted-foreground">
+          {t('batches.selectParticipantToViewWork')}
+        </p>
+      )}
+      <ParticipantRow
+        slots={rows.row1}
+        selectedRole={selectedRole}
+        isInteractive={isInteractive}
+        getTranscriptForRole={getTranscriptForRole}
+        onSelectRole={onSelectRole}
+      />
+      <ParticipantRow
+        slots={rows.row2}
+        selectedRole={selectedRole}
+        isInteractive={isInteractive}
+        getTranscriptForRole={getTranscriptForRole}
+        onSelectRole={onSelectRole}
+      />
     </div>
   )
 }
