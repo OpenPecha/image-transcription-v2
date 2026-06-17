@@ -6,4 +6,5 @@ export { useGetBatchTasks } from './get-batch-tasks'
 export { useUploadBatch } from './upload-batch'
 export { useRestoreTask } from './restore-task'
 export { exportBatch } from './export-batch'
+export { useSearchApplicationTasks, MIN_SEARCH_LENGTH } from './search-application-tasks'
 
