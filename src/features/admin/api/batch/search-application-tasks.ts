@@ -10,14 +10,14 @@ const searchApplicationTasks = async (
   applicationName: string,
   taskName: string
 ): Promise<BatchTaskSearchResult[]> => {
-  const response = await apiClient.get<
+  const data = (await apiClient.get<
     BatchTaskSearchResult | BatchTaskSearchResult[] | null
   >(`/batch/application/${applicationName}/tasks/search`, {
     params: { task_name: taskName },
-  })
+  })) as unknown as BatchTaskSearchResult | BatchTaskSearchResult[] | null
 
-  if (!response) return []
-  return Array.isArray(response) ? response : [response]
+  if (!data) return []
+  return Array.isArray(data) ? data : [data]
 }
 
 export const useSearchApplicationTasks = (submittedTaskName: string) => {
