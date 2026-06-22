@@ -502,7 +502,7 @@ export function WorkspaceEditor() {
                 : { height: `${splitPosition}%` }
             }
           >
-            <ImageCanvas imageUrl={task.task_url} />
+            <ImageCanvas imageUrl={task.task_url} onRefreshUrl={() => refetch()} />
           </div>
 
           <div

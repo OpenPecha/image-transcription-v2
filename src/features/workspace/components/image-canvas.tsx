@@ -10,12 +10,18 @@ interface ImageCanvasProps {
   imageUrl: string
   isLoading?: boolean
   username?: string
+  onRefreshUrl?: () => void | Promise<unknown>
 }
 
-export function ImageCanvas({ imageUrl, isLoading, username }: ImageCanvasProps) {
+export function ImageCanvas({
+  imageUrl,
+  isLoading,
+  username,
+  onRefreshUrl,
+}: ImageCanvasProps) {
   const { t } = useTranslation('workspace')
   const containerRef = useRef<HTMLDivElement>(null)
-  const { displayUrl, isConverting, error } = useTiffImage(imageUrl)
+  const { displayUrl, isConverting, error } = useTiffImage(imageUrl, onRefreshUrl)
 
   if (isLoading) {
     return (
@@ -36,13 +42,15 @@ export function ImageCanvas({ imageUrl, isLoading, username }: ImageCanvasProps)
   }
 
   if (isConverting) {
-    <div className="flex-1 h-full flex items-center justify-center bg-muted/20">
-      <div className="flex flex-col items-center gap-3">
-        <Skeleton className="h-64 w-64" />
+    return (
+      <div className="flex h-full flex-1 flex-col items-center justify-center bg-muted/20">
+        <div className="flex flex-col items-center gap-3">
+          <Skeleton className="h-64 w-64" />
           <span className="text-sm text-muted-foreground">{t('imageCanvas.converting')}</span>
         </div>
-    </div>
-    }
+      </div>
+    )
+  }
 
   if (error) {
     return (
