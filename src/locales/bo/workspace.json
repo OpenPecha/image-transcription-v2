@@ -127,11 +127,17 @@
     "unresolvedCount": "ཐག་མ་ཆོད་པའི་ཁྱད་པར་ {{count}} འདུག",
     "allResolved": "ཁྱད་པར་ཚང་མ་ཐག་བཅད་ཟིན།",
     "previewPlaceholder": "ཐག་བཅད་ཟིན་པའི་སྔོན་ལྟ་འདིར་འཆར་རྒྱུ་ཡིན།",
-    "annotator1": "ཡིག་འགྲིག་པ་ 1",
-    "annotator2": "ཡིག་འགྲིག་པ་ 2",
-    "reviewer1": "ཞིབ་བཤེར་པ་ 1",
-    "reviewer2": "ཞིབ་བཤེར་པ་ 2",
-    "referencePlaceholder": "ཡིག་འགྲིག་མེད།"
+    "annotator1": "ཡིག་འགྲིག་པ་ ཀ",
+    "annotator2": "ཡིག་འགྲིག་པ་ ཁ",
+    "reviewer1": "ཞིབ་བཤེར་པ་ ཀ",
+    "reviewer2": "ཞིབ་བཤེར་པ་ ཁ",
+    "presetChoiceSummary": "{{labelA}}: {{countA}} · {{labelB}}: {{countB}}",
+    "referenceDiffHint": "ཡིག་ཆ་མཐོང་བའི་ཚོད་འདི་གཞན་ཆ་ནས་ཁྱད་པར་ཡོད།",
+    "referenceNoDiffHint": "གཞན་ཆ་དང་ཁྱད་པར་མེད།",
+    "referencePlaceholder": "ཡིག་འགྲིག་མེད།",
+    "whitespaceSpace": "སྟོང་ཆ། (མཐོང་བའི་ཚོད་ནང་)",
+    "whitespaceTab": "ཐིག་ཆ། (མཐོང་བའི་ཚོད་ནང་)",
+    "whitespaceNewline": "ཐིག་གསར་པ།"
   },
   "reviewer": {
     "pendingAlignment": "ཡིག་འགྲིག་པ་གཉིས་ཀྱི་བསྡུར་བའི་སྒུག་བཞིན་པ། ཡིག་འགྲིག་གཉིས་པོ་ཚང་མ་གྲུབ་རྗེས་ཁྱད་པར་འདིར་འཆར་རྒྱུ་ཡིན།",

@@ -1,8 +1,9 @@
-import { useMemo, Fragment } from 'react'
+import { useMemo } from 'react'
 import { diff_match_patch, DIFF_DELETE, DIFF_INSERT, DIFF_EQUAL } from 'diff-match-patch'
 import { cn } from '@/lib/utils'
 import { FONT_FAMILY_MAP } from './constant'
 import type { EditorFontFamily } from '@/store/use-ui-store'
+import { renderVisibleWhitespace } from '../utils/render-visible-whitespace'
 
 interface TranscriptDiffViewerProps {
   initialTranscript: string
@@ -17,27 +18,6 @@ function buildDiffedSegments(original: string, annotated: string) {
   const diffs = dmp.diff_main(original, annotated)
   dmp.diff_cleanupSemantic(diffs)
   return diffs
-}
-
-function renderTextWithNewlines(text: string) {
-  const parts = text.split('\n')
-  return (
-    <Fragment>
-      {parts.map((part, index) => (
-        <Fragment key={index}>
-          {part}
-          {index < parts.length - 1 && (
-            <Fragment>
-              <span className="inline-block mx-1 select-none font-sans text-[0.85em] opacity-80" aria-hidden="true">
-                ↵
-              </span>
-              {'\n'}
-            </Fragment>
-          )}
-        </Fragment>
-      ))}
-    </Fragment>
-  )
 }
 
 interface CharInfo {
@@ -178,10 +158,10 @@ export function TranscriptDiffViewer({
                     'rounded px-0.5 ring-1 ring-rose-300 dark:ring-rose-700'
                   )}
                 >
-                  {renderTextWithNewlines(seg.text)}
+                  {renderVisibleWhitespace(seg.text, { revealWhitespace: true })}
                 </mark>
               ) : (
-                <span key={i}>{renderTextWithNewlines(seg.text)}</span>
+                <span key={i}>{renderVisibleWhitespace(seg.text)}</span>
               )
             )}
           </p>
@@ -223,7 +203,7 @@ export function TranscriptDiffViewer({
                       'rounded px-0.5 ring-1 ring-emerald-300 dark:ring-emerald-700'
                     )}
                   >
-                    {renderTextWithNewlines(seg.text)}
+                    {renderVisibleWhitespace(seg.text, { revealWhitespace: true })}
                   </mark>
                 )
               }
@@ -236,7 +216,7 @@ export function TranscriptDiffViewer({
                       'rounded px-0.5 ring-1 ring-blue-300 dark:ring-blue-700'
                     )}
                   >
-                    {renderTextWithNewlines(seg.text)}
+                    {renderVisibleWhitespace(seg.text, { revealWhitespace: true })}
                   </mark>
                 )
               }
@@ -249,11 +229,11 @@ export function TranscriptDiffViewer({
                       'rounded px-0.5 line-through opacity-70'
                     )}
                   >
-                    {renderTextWithNewlines(seg.text)}
+                    {renderVisibleWhitespace(seg.text, { revealWhitespace: true })}
                   </mark>
                 )
               }
-              return <span key={i}>{renderTextWithNewlines(seg.text)}</span>
+              return <span key={i}>{renderVisibleWhitespace(seg.text)}</span>
             })}
           </p>
         </div>
@@ -280,7 +260,15 @@ export function TranscriptDiffViewer({
           Deleted by You
         </span>
         <span className="flex items-center gap-1.5 ml-auto">
-          <span className="inline-block opacity-80 text-[1.2em]">↵</span>
+          <span className="inline-block font-sans opacity-80">␣</span>
+          Space
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block font-sans opacity-80">⇥</span>
+          Tab
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block font-sans opacity-80">↵</span>
           Line break
         </span>
       </div>
