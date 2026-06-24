@@ -6,6 +6,7 @@ import {
   useLayoutEffect,
   forwardRef,
   useImperativeHandle,
+  useMemo,
   type ReactNode,
   type RefObject,
 } from 'react'
@@ -28,6 +29,7 @@ import {
   getDiffProposedValue,
   isDiffResolved,
   isDuplicateReviewerInput,
+  countPresetResolutionChoices,
 } from '../utils/parse-tdiff'
 import { parseTextSegmentSelection } from '../utils/text-selection'
 import { FONT_FAMILY_MAP } from './constant'
@@ -159,6 +161,10 @@ export const DiffResolver = forwardRef<DiffResolverHandle, DiffResolverProps>(fu
 
   const diffSegments = segments.filter((seg): seg is DiffSegment => seg.type === 'diff')
   const unresolvedCount = diffSegments.filter((seg) => !isDiffResolved(seg)).length
+  const presetChoiceCounts = useMemo(
+    () => countPresetResolutionChoices(diffSegments),
+    [diffSegments]
+  )
   const [menuCollisionBoundary, setMenuCollisionBoundary] = useState<Element[] | undefined>(
     undefined
   )
@@ -447,17 +453,29 @@ export const DiffResolver = forwardRef<DiffResolverHandle, DiffResolverProps>(fu
           )}
         </TabsList>
 
-        <div className="shrink-0 text-xs font-semibold select-none">
-          {unresolvedCount > 0 ? (
-            <span className="text-amber-700 dark:text-amber-400 bg-amber-100/60 dark:bg-amber-950/40 px-2.5 py-1 rounded-full border border-amber-200/50 dark:border-amber-900/50">
-              {t('diffResolver.unresolvedCount', { count: unresolvedCount })}
-            </span>
-          ) : (
-            <span className="text-emerald-700 dark:text-emerald-400 bg-emerald-100/60 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-200/50 dark:border-emerald-900/50 flex items-center gap-1">
-              <Check className="h-3.5 w-3.5" />
-              {t('diffResolver.allResolved')}
+        <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-2">
+          {showReferenceTabs && diffSegments.length > 0 && (
+            <span className="text-xs text-muted-foreground">
+              {t('diffResolver.presetChoiceSummary', {
+                labelA: referenceTabLabels.tab1,
+                countA: presetChoiceCounts.countA,
+                labelB: referenceTabLabels.tab2,
+                countB: presetChoiceCounts.countB,
+              })}
             </span>
           )}
+          <div className="text-xs font-semibold select-none">
+            {unresolvedCount > 0 ? (
+              <span className="text-amber-700 dark:text-amber-400 bg-amber-100/60 dark:bg-amber-950/40 px-2.5 py-1 rounded-full border border-amber-200/50 dark:border-amber-900/50">
+                {t('diffResolver.unresolvedCount', { count: unresolvedCount })}
+              </span>
+            ) : (
+              <span className="text-emerald-700 dark:text-emerald-400 bg-emerald-100/60 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-200/50 dark:border-emerald-900/50 flex items-center gap-1">
+                <Check className="h-3.5 w-3.5" />
+                {t('diffResolver.allResolved')}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -741,6 +759,8 @@ export const DiffResolver = forwardRef<DiffResolverHandle, DiffResolverProps>(fu
           >
             <AnnotatorReadonlyPanel
               value={referenceTranscript1}
+              otherValue={referenceTranscript2}
+              isPrimarySlot
               placeholder={t('diffResolver.referencePlaceholder')}
               fontFamily={resolvedFontFamily}
               fontSize={fontSize}
@@ -753,6 +773,8 @@ export const DiffResolver = forwardRef<DiffResolverHandle, DiffResolverProps>(fu
           >
             <AnnotatorReadonlyPanel
               value={referenceTranscript2}
+              otherValue={referenceTranscript1}
+              isPrimarySlot={false}
               placeholder={t('diffResolver.referencePlaceholder')}
               fontFamily={resolvedFontFamily}
               fontSize={fontSize}

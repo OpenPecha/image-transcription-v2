@@ -127,11 +127,17 @@
     "unresolvedCount": "{{count}} unresolved differences",
     "allResolved": "All differences resolved",
     "previewPlaceholder": "Resolved preview will appear here...",
-    "annotator1": "Annotator 1",
-    "annotator2": "Annotator 2",
-    "reviewer1": "Reviewer 1",
-    "reviewer2": "Reviewer 2",
-    "referencePlaceholder": "No transcript available."
+    "annotator1": "Annotator A",
+    "annotator2": "Annotator B",
+    "reviewer1": "Reviewer A",
+    "reviewer2": "Reviewer B",
+    "presetChoiceSummary": "{{labelA}}: {{countA}} · {{labelB}}: {{countB}}",
+    "referenceDiffHint": "Highlighted text differs from the other slot.",
+    "referenceNoDiffHint": "No differences from the other slot.",
+    "referencePlaceholder": "No transcript available.",
+    "whitespaceSpace": "space (in highlights)",
+    "whitespaceTab": "tab (in highlights)",
+    "whitespaceNewline": "line break"
   },
   "reviewer": {
     "pendingAlignment": "Waiting for annotator comparison. The alignment diff will appear here once both annotations are ready.",
