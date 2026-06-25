@@ -1,8 +1,9 @@
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch'
 import { ZoomIn, ZoomOut, RotateCcw, Maximize2, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { tiffImageLog } from '@/features/workspace/utils/tiff-image-debug-log'
 import { useTiffImage } from '../hooks'
 import { useTranslation } from 'react-i18next'
 
@@ -16,6 +17,20 @@ export function ImageCanvas({ imageUrl, isLoading, username }: ImageCanvasProps)
   const { t } = useTranslation('workspace')
   const containerRef = useRef<HTMLDivElement>(null)
   const { displayUrl, isConverting, error } = useTiffImage(imageUrl)
+
+  useEffect(() => {
+    if (isLoading) {
+      tiffImageLog.imageCanvas({ branch: 'loading' })
+    } else if (isConverting) {
+      tiffImageLog.imageCanvas({ branch: 'converting' })
+    } else if (error) {
+      tiffImageLog.imageCanvas({ branch: 'error' })
+    } else if (!displayUrl) {
+      tiffImageLog.imageCanvas({ branch: 'null' })
+    } else {
+      tiffImageLog.imageCanvas({ branch: 'img' })
+    }
+  }, [isLoading, isConverting, error, displayUrl])
 
   if (isLoading) {
     return (
@@ -36,13 +51,15 @@ export function ImageCanvas({ imageUrl, isLoading, username }: ImageCanvasProps)
   }
 
   if (isConverting) {
-    <div className="flex-1 h-full flex items-center justify-center bg-muted/20">
-      <div className="flex flex-col items-center gap-3">
-        <Skeleton className="h-64 w-64" />
+    return (
+      <div className="flex-1 h-full flex items-center justify-center bg-muted/20">
+        <div className="flex flex-col items-center gap-3">
+          <Skeleton className="h-64 w-64" />
           <span className="text-sm text-muted-foreground">{t('imageCanvas.converting')}</span>
         </div>
-    </div>
-    }
+      </div>
+    )
+  }
 
   if (error) {
     return (
@@ -133,6 +150,8 @@ export function ImageCanvas({ imageUrl, isLoading, username }: ImageCanvasProps)
                   alt="Source document"
                   className="max-h-full max-w-full object-contain"
                   draggable={false}
+                  onLoad={() => tiffImageLog.imgLoad({ src: displayUrl })}
+                  onError={() => tiffImageLog.imgError({ src: displayUrl })}
                 />
               </TransformComponent>
             </div>
