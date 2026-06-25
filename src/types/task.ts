@@ -165,8 +165,12 @@ export interface AssignedTask {
   batch_name: string
   group: string
   orientation?: TaskOrientation
-  annotation_rejection_count: number
-  review_rejection_count: number
+  /** Times this assignment was returned to the current worker. */
+  rejection_count?: number
+  annotation_a_rejection_count?: number
+  annotation_b_rejection_count?: number
+  review_a_rejection_count?: number
+  review_b_rejection_count?: number
 }
 
 // Task submission request

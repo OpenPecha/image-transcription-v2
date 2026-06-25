@@ -107,7 +107,14 @@
     "getTask": "ལས་ཀ་ལེན།",
     "dashboard": "ལས་གཞི་བཀོད་པ།",
     "logout": "ཕྱིར་ཐོན།",
-    "noRole": "འགན་མེད།"
+    "noRole": "འགན་མེད།",
+    "rejection": {
+      "returnedToYou": "ཁྱེད་ལ་ཕྱིར་སློག་བྱས།: {{count}}",
+      "returnedForRework": "བསྐྱར་དུ་ལས་ཀར་ཕྱིར་སློག: {{count}}",
+      "priorAnnotationRejections": "སྔོན་གྱི་ཡིག་འགྲིག་ཕྱིར་སློག",
+      "priorReviewRejections": "སྔོན་གྱི་ཞིབ་བཤེར་ཕྱིར་སློག",
+      "slotCount": "{{slot}}: {{count}}"
+    }
   },
   "branding": {
     "appName": "ཡིག་འགྲིག་མིང་འགྲིག"

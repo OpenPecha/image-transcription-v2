@@ -61,6 +61,10 @@ export interface BatchTask {
   reviewer_b_username?: string | null
   final_reviewer_username?: string | null
   trashed_by?: string | null
+  annotation_a_rejection_count?: number
+  annotation_b_rejection_count?: number
+  review_a_rejection_count?: number
+  review_b_rejection_count?: number
 }
 
 // Task returned from application-wide task search
@@ -84,6 +88,10 @@ export interface BatchTaskSearchResult {
   reviewed_transcript_order_1: string | null
   reviewed_transcript_order_2: string | null
   finalised_transcript: string | null
+  annotation_a_rejection_count?: number
+  annotation_b_rejection_count?: number
+  review_a_rejection_count?: number
+  review_b_rejection_count?: number
 }
 
 export type BatchTaskParticipantRole =

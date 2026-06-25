@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { ThemeToggle, LanguageToggle, TaskFileName } from '@/components/common'
 import type { AssignedTask } from '@/types'
+import { TaskRejectionInfo } from './task-rejection-info'
 
 interface WorkspaceSidebarProps {
   task: AssignedTask | null
@@ -141,16 +142,7 @@ export function WorkspaceSidebar({
                     getStateColor(task.state)
                   )}>
                   </div>
-                  {(task.annotation_rejection_count > 0 || task.review_rejection_count > 0) && (
-                    <div className="flex items-center gap-2 mt-2 text-xs text-red-600">
-                      {task.annotation_rejection_count > 0 && (
-                        <span>Annotation rejections: {task.annotation_rejection_count}</span>
-                      )}
-                      {task.review_rejection_count > 0 && (
-                        <span>Review rejections: {task.review_rejection_count}</span>
-                      )}
-                    </div>
-                  )}
+                  <TaskRejectionInfo task={task} role={currentUser.role} />
                 </div>
               </div>
             </div>

@@ -107,7 +107,14 @@
     "getTask": "Get Task",
     "dashboard": "Dashboard",
     "logout": "Logout",
-    "noRole": "No Role"
+    "noRole": "No Role",
+    "rejection": {
+      "returnedToYou": "Returned to you: {{count}}",
+      "returnedForRework": "Returned for rework: {{count}}",
+      "priorAnnotationRejections": "Prior annotation rejections",
+      "priorReviewRejections": "Prior review rejections",
+      "slotCount": "{{slot}}: {{count}}"
+    }
   },
   "branding": {
     "appName": "Image Transcription V2"
