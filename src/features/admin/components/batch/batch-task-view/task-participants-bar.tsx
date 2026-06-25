@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
+import { getParticipantRejectionCount, type TaskRejectionCounts } from '@/lib/rejection-counts'
 import type { BatchTask, BatchTaskParticipantRole } from '@/types'
 
 type TaskParticipantInfo = Pick<
@@ -11,12 +12,14 @@ type TaskParticipantInfo = Pick<
   | 'reviewer_a_username'
   | 'reviewer_b_username'
   | 'final_reviewer_username'
->
+> &
+  TaskRejectionCounts
 
 interface ParticipantSlot {
   label: string
   value: string
   role: BatchTaskParticipantRole
+  rejectionCount?: number
 }
 
 interface ParticipantRows {
@@ -41,11 +44,15 @@ function buildParticipantRows(
   const row1: ParticipantSlot[] = []
   const row2: ParticipantSlot[] = []
 
+  const slotRejection = (role: BatchTaskParticipantRole) =>
+    getParticipantRejectionCount(task, role)
+
   if (hasParticipantName(task.annotator_a_username)) {
     row1.push({
       label: labels.annotator1,
       value: task.annotator_a_username,
       role: 'annotator_a',
+      rejectionCount: slotRejection('annotator_a'),
     })
   }
   if (hasParticipantName(task.reviewer_a_username)) {
@@ -53,6 +60,7 @@ function buildParticipantRows(
       label: labels.reviewer1,
       value: task.reviewer_a_username,
       role: 'reviewer_a',
+      rejectionCount: slotRejection('reviewer_a'),
     })
   }
   if (hasParticipantName(task.final_reviewer_username)) {
@@ -60,6 +68,7 @@ function buildParticipantRows(
       label: labels.finalReviewer,
       value: task.final_reviewer_username,
       role: 'final_reviewer',
+      rejectionCount: slotRejection('final_reviewer'),
     })
   }
 
@@ -68,6 +77,7 @@ function buildParticipantRows(
       label: labels.annotator2,
       value: task.annotator_b_username,
       role: 'annotator_b',
+      rejectionCount: slotRejection('annotator_b'),
     })
   }
   if (hasParticipantName(task.reviewer_b_username)) {
@@ -75,6 +85,7 @@ function buildParticipantRows(
       label: labels.reviewer2,
       value: task.reviewer_b_username,
       role: 'reviewer_b',
+      rejectionCount: slotRejection('reviewer_b'),
     })
   }
 
@@ -92,6 +103,7 @@ interface ParticipantCellProps extends ParticipantSlot {
 function ParticipantCell({
   label,
   value,
+  rejectionCount,
   isSelected,
   isInteractive,
   hasTranscript,
@@ -99,7 +111,14 @@ function ParticipantCell({
 }: ParticipantCellProps) {
   const content = (
     <>
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <div className="flex items-center gap-1.5">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        {rejectionCount !== undefined && rejectionCount > 0 && (
+          <span className="text-xs font-semibold tabular-nums text-[rgb(255,1,1)]">
+            {rejectionCount}
+          </span>
+        )}
+      </div>
       <p
         className={cn(
           'truncate text-sm font-medium',
@@ -162,6 +181,7 @@ function ParticipantRow({
             label={slot.label}
             value={slot.value}
             role={slot.role}
+            rejectionCount={slot.rejectionCount}
             isSelected={selectedRole === slot.role}
             isInteractive={isInteractive}
             hasTranscript={hasTranscript}
