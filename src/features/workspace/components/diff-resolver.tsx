@@ -431,6 +431,12 @@ export const DiffResolver = forwardRef<DiffResolverHandle, DiffResolverProps>(fu
       ? { tab1: t('diffResolver.reviewer1'), tab2: t('diffResolver.reviewer2') }
       : { tab1: t('diffResolver.annotator1'), tab2: t('diffResolver.annotator2') }
 
+  const getPresetOptionLabel = (index: number): string => {
+    if (index === 0) return referenceTabLabels.tab1
+    if (index === 1) return referenceTabLabels.tab2
+    return t('diffResolver.optionPreset', { label: getAnnotatorOptionLabel(index) })
+  }
+
   return (
     <Tabs defaultValue="working" className="flex-1 flex flex-col h-full overflow-hidden bg-card">
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border bg-card/60 px-4 py-2">
@@ -553,7 +559,7 @@ export const DiffResolver = forwardRef<DiffResolverHandle, DiffResolverProps>(fu
             const optionsSummary = [
               ...seg.options.map(
                 (option, index) =>
-                  `${t('diffResolver.optionPreset', { label: getAnnotatorOptionLabel(index) })}: ${option}`
+                  `${getPresetOptionLabel(index)}: ${option}`
               ),
               `${reviewerInputLabel}: ${customValue}`,
             ].join(' | ')
@@ -623,7 +629,7 @@ export const DiffResolver = forwardRef<DiffResolverHandle, DiffResolverProps>(fu
                           className="min-w-0 flex-1 text-left whitespace-pre-wrap break-words"
                           style={{ fontFamily: resolvedFontFamily }}
                         >
-                          {t('diffResolver.optionPreset', { label: getAnnotatorOptionLabel(index) })}:{' '}
+                          {getPresetOptionLabel(index)}:{' '}
                           {formatDiffDisplay(option)}
                         </span>
                         <div className="flex shrink-0 items-start gap-2 pt-0.5">
