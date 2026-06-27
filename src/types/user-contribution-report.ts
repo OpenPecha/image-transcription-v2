@@ -12,6 +12,7 @@ export interface Itv2ContributionTask {
   char_percent_diff: number | null
   review_char_count?: number | null
   review_total_char_difference?: number | null
+  rejections_made?: number | null
   own_version_count?: number | null
   own_version_sum?: number | null
   selected_option_count?: number | null
@@ -34,13 +35,22 @@ export interface Itv2AnnotatorContributionSummary {
 export interface Itv2ReviewerContributionSummary {
   total_count?: number
   tasks_reviewed?: number
+  tasks_final_reviewed?: number
   rejection_count?: number
   unrejected_percent?: number
+  final_char_count?: number
+  total_char_difference?: number
+  char_percent_diff?: number
   review_char_count?: number
   review_total_char_difference?: number
-  selected_option_count?: number
+  rejections_made?: number
+  rejection_percent?: number
   own_version_count?: number
+  own_version_sum?: number
+  selected_option_count?: number
+  selected_option_sum?: number
   modified_option_count?: number
+  modified_option_sum?: number
 }
 
 export interface Itv2FinalReviewerContributionSummary {

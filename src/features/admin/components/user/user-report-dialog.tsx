@@ -93,15 +93,15 @@ export function UserReportDialog({ open, onOpenChange, user }: UserReportDialogP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[90vh] max-h-[92vh] w-[min(96vw,80rem)] max-w-[80rem] flex-col gap-4 p-6">
-        <DialogHeader>
+      <DialogContent className="flex h-[90vh] max-h-[92vh] w-[min(96vw,80rem)] max-w-[80rem] flex-col gap-4 overflow-hidden p-6">
+        <DialogHeader className="shrink-0">
           <DialogTitle>
             {t('users.report.title')} - {user.username}
           </DialogTitle>
           <DialogDescription>{t('users.report.description')}</DialogDescription>
         </DialogHeader>
 
-        <div className="flex items-end gap-3 border-b pb-4">
+        <div className="flex shrink-0 items-end gap-3 border-b pb-4">
           <div className="flex-1 space-y-1.5">
             <Label htmlFor="start-date" className="text-xs">
               {t('users.report.startDate')}
@@ -139,11 +139,13 @@ export function UserReportDialog({ open, onOpenChange, user }: UserReportDialogP
           </Button>
         </div>
 
-        <UserReportSummary role={user.role} summary={roleSummary} isLoading={isLoading} />
+        <div className="shrink-0">
+          <UserReportSummary role={user.role} summary={roleSummary} isLoading={isLoading} />
+        </div>
 
         <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
-          <h4 className="text-sm font-medium">{t('users.report.contributions')}</h4>
-          <div className="min-h-[52vh] flex-1 overflow-auto rounded-lg border">
+          <h4 className="shrink-0 text-sm font-medium">{t('users.report.contributions')}</h4>
+          <div className="min-h-0 flex-1 overflow-auto rounded-lg border">
             {isLoading ? (
               <ContributionsTableSkeleton role={normalizedRole} />
             ) : tasks.length === 0 ? (
@@ -168,8 +170,8 @@ function ContributionsTable({ tasks, role }: ContributionsTableProps) {
 
   if (role === UserRole.Annotator) {
     return (
-      <table className="w-full text-sm">
-        <thead className="sticky top-0 bg-muted">
+      <table className="w-full min-w-max text-sm">
+        <thead className="sticky top-0 z-10 bg-muted">
           <tr>
             <th className="px-4 py-2.5 text-left font-medium">
               {t('users.report.table.imageName')}
@@ -208,8 +210,8 @@ function ContributionsTable({ tasks, role }: ContributionsTableProps) {
 
   if (role === UserRole.Reviewer) {
     return (
-      <table className="w-full text-sm">
-        <thead className="sticky top-0 bg-muted">
+      <table className="w-full min-w-max text-sm">
+        <thead className="sticky top-0 z-10 bg-muted">
           <tr>
             <th className="px-4 py-2.5 text-left font-medium">
               {t('users.report.table.imageName')}
@@ -230,6 +232,24 @@ function ContributionsTable({ tasks, role }: ContributionsTableProps) {
               {t('users.report.table.reviewCharDiff')}
             </th>
             <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.finalChars')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.charDiff')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.percentDiff')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.ownVersion')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.selectedOption')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.modifiedOption')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
               {t('users.report.table.date')}
             </th>
           </tr>
@@ -245,8 +265,8 @@ function ContributionsTable({ tasks, role }: ContributionsTableProps) {
 
   if (role === UserRole.FinalReviewer) {
     return (
-      <table className="w-full text-sm">
-        <thead className="sticky top-0 bg-muted">
+      <table className="w-full min-w-max text-sm">
+        <thead className="sticky top-0 z-10 bg-muted">
           <tr>
             <th className="px-4 py-2.5 text-left font-medium">
               {t('users.report.table.imageName')}
@@ -290,8 +310,8 @@ function ContributionsTable({ tasks, role }: ContributionsTableProps) {
   }
 
   return (
-    <table className="w-full text-sm">
-      <thead className="sticky top-0 bg-muted">
+    <table className="w-full min-w-max text-sm">
+      <thead className="sticky top-0 z-10 bg-muted">
         <tr>
           <th className="px-3 py-2 text-left font-medium">
             {t('users.report.table.imageName')}
@@ -410,6 +430,24 @@ function ReviewerContributionRow({ task, role }: ContributionRowProps) {
       <td className="px-4 py-2.5 text-right font-mono text-xs">
         {formatReportSignedNumber(task.review_total_char_difference)}
       </td>
+      <td className="px-4 py-2.5 text-right font-mono text-xs">
+        {formatReportNumber(task.final_char_count)}
+      </td>
+      <td className="px-4 py-2.5 text-right font-mono text-xs">
+        {formatReportSignedNumber(task.total_char_difference)}
+      </td>
+      <td className="px-4 py-2.5 text-right font-mono text-xs">
+        {formatReportPercent(task.char_percent_diff)}
+      </td>
+      <td className="px-4 py-2.5 text-right font-mono text-xs">
+        {formatReportCountSum(task.own_version_count, task.own_version_sum)}
+      </td>
+      <td className="px-4 py-2.5 text-right font-mono text-xs">
+        {formatReportCountSum(task.selected_option_count, task.selected_option_sum)}
+      </td>
+      <td className="px-4 py-2.5 text-right font-mono text-xs">
+        {formatReportCountSum(task.modified_option_count, task.modified_option_sum)}
+      </td>
       <td className="px-4 py-2.5 text-right text-xs text-muted-foreground">
         {formatDateTime(task.updated_time)}
       </td>
@@ -458,7 +496,7 @@ function EmptyContributions() {
   const { t } = useTranslation('admin')
 
   return (
-    <div className="flex min-h-[52vh] flex-col items-center justify-center py-12 text-center">
+    <div className="flex h-full min-h-[12rem] flex-col items-center justify-center py-12 text-center">
       <div className="mb-4 rounded-full bg-muted p-3">
         <FileText className="h-6 w-6 text-muted-foreground" />
       </div>
@@ -475,7 +513,7 @@ function ContributionsTableSkeleton({ role }: { role: UserRole | undefined }) {
     role === UserRole.Annotator
       ? 8
       : role === UserRole.Reviewer
-        ? 7
+        ? 13
         : role === UserRole.FinalReviewer
           ? 10
           : 3

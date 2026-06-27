@@ -104,49 +104,82 @@ export function UserReportSummary({ role, summary, isLoading }: UserReportSummar
     }
 
     if (normalizedRole === UserRole.Reviewer && isReviewerSummary(summary)) {
-      const cards: StatCard[] = []
-
-      if (summary.tasks_reviewed != null || summary.total_count != null) {
-        cards.push({
+      return [
+        {
           value: summary.tasks_reviewed ?? summary.total_count ?? 0,
           label: t('users.report.summary.tasksReviewed'),
           bg: STAT_CARD_BG.emerald,
-        })
-      }
-
-      if (summary.rejection_count != null) {
-        cards.push({
-          value: summary.rejection_count,
+        },
+        {
+          value: summary.tasks_final_reviewed ?? 0,
+          label: t('users.report.summary.tasksFinalReviewed'),
+          bg: STAT_CARD_BG.sky,
+        },
+        {
+          value: summary.rejection_count ?? 0,
           label: t('users.report.summary.rejectionCount'),
           bg: STAT_CARD_BG.red,
-        })
-      }
-
-      if (summary.unrejected_percent != null) {
-        cards.push({
+        },
+        {
           value: formatReportPercent(summary.unrejected_percent),
           label: t('users.report.summary.passRate'),
           bg: STAT_CARD_BG.violet,
-        })
-      }
-
-      if (summary.review_char_count != null) {
-        cards.push({
+        },
+        {
           value: formatReportNumber(summary.review_char_count),
           label: t('users.report.summary.reviewCharCount'),
           bg: STAT_CARD_BG.blue,
-        })
-      }
-
-      if (summary.review_total_char_difference != null) {
-        cards.push({
+        },
+        {
           value: formatReportSignedNumber(summary.review_total_char_difference),
           label: t('users.report.summary.reviewCharDiff'),
           bg: STAT_CARD_BG.amber,
-        })
-      }
-
-      return cards
+        },
+        {
+          value: formatReportNumber(summary.final_char_count),
+          label: t('users.report.summary.finalCharCount'),
+          bg: STAT_CARD_BG.blue,
+        },
+        {
+          value: formatReportSignedNumber(summary.total_char_difference),
+          label: t('users.report.summary.charDiffVsFinal'),
+          bg: STAT_CARD_BG.amber,
+        },
+        {
+          value: formatReportPercent(summary.char_percent_diff),
+          label: t('users.report.summary.charPercentDiff'),
+          bg: STAT_CARD_BG.orange,
+        },
+        {
+          value: summary.rejections_made ?? 0,
+          label: t('users.report.summary.rejectionsMade'),
+          bg: STAT_CARD_BG.red,
+        },
+        {
+          value: formatReportCountSum(
+            summary.own_version_count,
+            summary.own_version_sum
+          ),
+          label: t('users.report.summary.ownVersion'),
+          bg: STAT_CARD_BG.sky,
+        },
+        {
+          value: formatReportCountSum(
+            summary.selected_option_count,
+            summary.selected_option_sum
+          ),
+          label: t('users.report.summary.selectedOption'),
+          bg: STAT_CARD_BG.emerald,
+        },
+        {
+          value: formatReportCountSum(
+            summary.modified_option_count,
+            summary.modified_option_sum
+          ),
+          label: t('users.report.summary.modifiedOption'),
+          bg: STAT_CARD_BG.amber,
+        },
+      ]
     }
 
     if (normalizedRole === UserRole.FinalReviewer && isFinalReviewerSummary(summary)) {
@@ -220,14 +253,16 @@ export function UserReportSummary({ role, summary, isLoading }: UserReportSummar
   }
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-[repeat(auto-fit,minmax(9rem,1fr))]">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
       {stats.map((stat) => (
         <div
           key={stat.label}
-          className={`flex min-h-[5.5rem] flex-col items-center justify-center rounded-lg px-4 py-5 ${stat.bg}`}
+          className={`flex min-h-[5.5rem] flex-col items-center justify-center rounded-lg px-3 py-4 ${stat.bg}`}
         >
-          <span className="text-2xl font-bold tabular-nums">{stat.value}</span>
-          <span className="mt-1 text-center text-sm text-muted-foreground">{stat.label}</span>
+          <span className="text-xl font-bold tabular-nums sm:text-2xl">{stat.value}</span>
+          <span className="mt-1 text-center text-xs text-muted-foreground sm:text-sm">
+            {stat.label}
+          </span>
         </div>
       ))}
     </div>
@@ -236,7 +271,7 @@ export function UserReportSummary({ role, summary, isLoading }: UserReportSummar
 
 function UserReportSummarySkeleton() {
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-7">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
       {[...Array(7)].map((_, i) => (
         <div
           key={i}
