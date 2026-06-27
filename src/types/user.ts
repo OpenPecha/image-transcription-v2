@@ -63,6 +63,7 @@ export const ROLE_CONFIG: Record<UserRole, { label: string; description: string 
 }
 
 // User contribution from report endpoint
+/** @deprecated Legacy flat contribution row — use ITV2 {@link UserContributionReportResponse} instead. */
 export interface UserContribution {
   task_id: string
   name: string

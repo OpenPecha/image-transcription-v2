@@ -21,19 +21,49 @@
       "contributions": "Contributions",
       "summary": {
         "tasksCompleted": "Tasks Completed",
+        "tasksFinalReviewed": "Reached Final Review",
+        "tasksReviewed": "Tasks Reviewed",
+        "tasksFinalised": "Tasks Finalised",
+        "rejectionCount": "Rejections",
+        "rejectionsMade": "Rejections Made",
+        "passRate": "Pass Rate",
+        "finalCharCount": "Final Characters",
+        "charDiffVsFinal": "Char Diff vs Final",
+        "charPercentDiff": "Avg % Diff vs Final",
+        "reviewCharCount": "Review Characters",
+        "reviewCharDiff": "Review Char Diff",
+        "ownVersion": "Own Version (uses / chars)",
+        "selectedOption": "Selected Option (uses / chars)",
+        "modifiedOption": "Modified Option (uses / chars)",
         "totalChars": "Total Characters",
         "totalLines": "Total Lines",
-        "batchesWorked": "Batches Worked",
-        "rejectionCount": "Rejection Count"
+        "batchesWorked": "Batches Worked"
       },
       "table": {
         "imageName": "Image Name",
         "batch": "Batch",
+        "slot": "Slot",
+        "rejections": "Rejections",
+        "finalChars": "Final Chars",
+        "charDiff": "Char Diff",
+        "percentDiff": "% Diff",
+        "reviewChars": "Review Chars",
+        "reviewCharDiff": "Review Diff",
+        "ownVersion": "Own Version",
+        "selectedOption": "Selected",
+        "modifiedOption": "Modified",
+        "countSumHint": "uses / chars",
         "role": "Role",
         "metric": "Output",
         "chars": "Chars",
         "lineCount": "{{count}} lines",
-        "date": "Date"
+        "date": "Date",
+        "slots": {
+          "annotatorA": "Annotator A",
+          "annotatorB": "Annotator B",
+          "reviewerA": "Reviewer A",
+          "reviewerB": "Reviewer B"
+        }
       },
       "noContributions": "No contributions found",
       "noContributionsHint": "Try selecting a different date range"

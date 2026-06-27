@@ -1,109 +1,233 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CheckCircle, Type, Layers, XCircle, AlignLeft } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
-import { isLineAlignmentContribution } from '@/types'
-import type { UserContribution } from '@/types'
-import type { LucideIcon } from 'lucide-react'
+import {
+  formatReportCountSum,
+  formatReportNumber,
+  formatReportPercent,
+  formatReportSignedNumber,
+  type Itv2ReportRoleSummary,
+} from '@/lib/user-contribution-report'
+import {
+  UserRole,
+  normalizeUserRole,
+  type Itv2AnnotatorContributionSummary,
+  type Itv2FinalReviewerContributionSummary,
+  type Itv2ReviewerContributionSummary,
+} from '@/types'
 
 interface UserReportSummaryProps {
-  contributions: UserContribution[]
+  role: UserRole | string | undefined
+  summary: Itv2ReportRoleSummary | null
   isLoading: boolean
 }
 
 interface StatCard {
-  icon: LucideIcon
   value: string | number
   label: string
-  color: string
   bg: string
 }
 
-export function UserReportSummary({ contributions, isLoading }: UserReportSummaryProps) {
+const STAT_CARD_BG = {
+  emerald: 'bg-emerald-100 dark:bg-emerald-950/55 border border-emerald-200/80 dark:border-emerald-900/60',
+  sky: 'bg-sky-100 dark:bg-sky-950/55 border border-sky-200/80 dark:border-sky-900/60',
+  red: 'bg-red-100 dark:bg-red-950/55 border border-red-200/80 dark:border-red-900/60',
+  violet: 'bg-violet-100 dark:bg-violet-950/55 border border-violet-200/80 dark:border-violet-900/60',
+  blue: 'bg-blue-100 dark:bg-blue-950/55 border border-blue-200/80 dark:border-blue-900/60',
+  amber: 'bg-amber-100 dark:bg-amber-950/55 border border-amber-200/80 dark:border-amber-900/60',
+  orange: 'bg-orange-100 dark:bg-orange-950/55 border border-orange-200/80 dark:border-orange-900/60',
+} as const
+
+function isAnnotatorSummary(
+  summary: Itv2ReportRoleSummary
+): summary is Itv2AnnotatorContributionSummary {
+  return 'tasks_annotated' in summary
+}
+
+function isReviewerSummary(
+  summary: Itv2ReportRoleSummary
+): summary is Itv2ReviewerContributionSummary {
+  return 'tasks_reviewed' in summary || 'review_char_count' in summary
+}
+
+function isFinalReviewerSummary(
+  summary: Itv2ReportRoleSummary
+): summary is Itv2FinalReviewerContributionSummary {
+  return 'tasks_finalised' in summary
+}
+
+export function UserReportSummary({ role, summary, isLoading }: UserReportSummaryProps) {
   const { t } = useTranslation('admin')
+  const normalizedRole = normalizeUserRole(role)
 
-  const stats = useMemo(() => {
-    if (contributions.length === 0) return []
+  const stats = useMemo((): StatCard[] => {
+    if (!summary) return []
 
-    const tasksCompleted = contributions.length
-    const batchesWorked = new Set(contributions.map((item) => item.batch_name)).size
-    const rejectionCount = contributions.reduce((sum, item) => sum + item.rejection_count, 0)
-
-    const hasTranscription = contributions.some((c) => !isLineAlignmentContribution(c))
-    const hasLineAlignment = contributions.some((c) => isLineAlignmentContribution(c))
-
-    const result: StatCard[] = [
-      {
-        icon: CheckCircle,
-        value: tasksCompleted,
-        label: t('users.report.summary.tasksCompleted'),
-        color: 'text-emerald-600',
-        bg: 'bg-emerald-50 dark:bg-emerald-950/30',
-      },
-    ]
-
-    if (hasTranscription) {
-      const totalChars = contributions
-        .filter((c) => !isLineAlignmentContribution(c))
-        .reduce((sum, item) => sum + item.char_diff, 0)
-
-      result.push({
-        icon: Type,
-        value: totalChars.toLocaleString(),
-        label: t('users.report.summary.totalChars'),
-        color: 'text-blue-600',
-        bg: 'bg-blue-50 dark:bg-blue-950/30',
-      })
+    if (normalizedRole === UserRole.Annotator && isAnnotatorSummary(summary)) {
+      return [
+        {
+          value: summary.tasks_annotated,
+          label: t('users.report.summary.tasksCompleted'),
+          bg: STAT_CARD_BG.emerald,
+        },
+        {
+          value: summary.tasks_final_reviewed,
+          label: t('users.report.summary.tasksFinalReviewed'),
+          bg: STAT_CARD_BG.sky,
+        },
+        {
+          value: summary.rejection_count,
+          label: t('users.report.summary.rejectionCount'),
+          bg: STAT_CARD_BG.red,
+        },
+        {
+          value: formatReportPercent(summary.unrejected_percent),
+          label: t('users.report.summary.passRate'),
+          bg: STAT_CARD_BG.violet,
+        },
+        {
+          value: formatReportNumber(summary.final_char_count),
+          label: t('users.report.summary.finalCharCount'),
+          bg: STAT_CARD_BG.blue,
+        },
+        {
+          value: formatReportSignedNumber(summary.total_char_difference),
+          label: t('users.report.summary.charDiffVsFinal'),
+          bg: STAT_CARD_BG.amber,
+        },
+        {
+          value: formatReportPercent(summary.char_percent_diff),
+          label: t('users.report.summary.charPercentDiff'),
+          bg: STAT_CARD_BG.orange,
+        },
+      ]
     }
 
-    if (hasLineAlignment) {
-      const totalLines = contributions
-        .filter(isLineAlignmentContribution)
-        .reduce((sum, item) => sum + (item.line_count ?? 0), 0)
+    if (normalizedRole === UserRole.Reviewer && isReviewerSummary(summary)) {
+      const cards: StatCard[] = []
 
-      result.push({
-        icon: AlignLeft,
-        value: totalLines.toLocaleString(),
-        label: t('users.report.summary.totalLines'),
-        color: 'text-violet-600',
-        bg: 'bg-violet-50 dark:bg-violet-950/30',
-      })
+      if (summary.tasks_reviewed != null || summary.total_count != null) {
+        cards.push({
+          value: summary.tasks_reviewed ?? summary.total_count ?? 0,
+          label: t('users.report.summary.tasksReviewed'),
+          bg: STAT_CARD_BG.emerald,
+        })
+      }
+
+      if (summary.rejection_count != null) {
+        cards.push({
+          value: summary.rejection_count,
+          label: t('users.report.summary.rejectionCount'),
+          bg: STAT_CARD_BG.red,
+        })
+      }
+
+      if (summary.unrejected_percent != null) {
+        cards.push({
+          value: formatReportPercent(summary.unrejected_percent),
+          label: t('users.report.summary.passRate'),
+          bg: STAT_CARD_BG.violet,
+        })
+      }
+
+      if (summary.review_char_count != null) {
+        cards.push({
+          value: formatReportNumber(summary.review_char_count),
+          label: t('users.report.summary.reviewCharCount'),
+          bg: STAT_CARD_BG.blue,
+        })
+      }
+
+      if (summary.review_total_char_difference != null) {
+        cards.push({
+          value: formatReportSignedNumber(summary.review_total_char_difference),
+          label: t('users.report.summary.reviewCharDiff'),
+          bg: STAT_CARD_BG.amber,
+        })
+      }
+
+      return cards
     }
 
-    result.push(
-      {
-        icon: Layers,
-        value: batchesWorked,
-        label: t('users.report.summary.batchesWorked'),
-        color: 'text-amber-600',
-        bg: 'bg-amber-50 dark:bg-amber-950/30',
-      },
-      {
-        icon: XCircle,
-        value: rejectionCount,
-        label: t('users.report.summary.rejectionCount'),
-        color: 'text-red-600',
-        bg: 'bg-red-50 dark:bg-red-950/30',
-      },
-    )
+    if (normalizedRole === UserRole.FinalReviewer && isFinalReviewerSummary(summary)) {
+      return [
+        {
+          value: summary.tasks_finalised,
+          label: t('users.report.summary.tasksFinalised'),
+          bg: STAT_CARD_BG.emerald,
+        },
+        {
+          value: summary.rejections_made,
+          label: t('users.report.summary.rejectionsMade'),
+          bg: STAT_CARD_BG.red,
+        },
+        {
+          value: formatReportPercent(summary.unrejected_percent),
+          label: t('users.report.summary.passRate'),
+          bg: STAT_CARD_BG.violet,
+        },
+        {
+          value: formatReportNumber(summary.final_char_count),
+          label: t('users.report.summary.finalCharCount'),
+          bg: STAT_CARD_BG.blue,
+        },
+        {
+          value: formatReportSignedNumber(summary.total_char_difference),
+          label: t('users.report.summary.charDiffVsFinal'),
+          bg: STAT_CARD_BG.amber,
+        },
+        {
+          value: formatReportPercent(summary.char_percent_diff),
+          label: t('users.report.summary.charPercentDiff'),
+          bg: STAT_CARD_BG.orange,
+        },
+        {
+          value: formatReportCountSum(
+            summary.own_version_count,
+            summary.own_version_sum
+          ),
+          label: t('users.report.summary.ownVersion'),
+          bg: STAT_CARD_BG.sky,
+        },
+        {
+          value: formatReportCountSum(
+            summary.selected_option_count,
+            summary.selected_option_sum
+          ),
+          label: t('users.report.summary.selectedOption'),
+          bg: STAT_CARD_BG.emerald,
+        },
+        {
+          value: formatReportCountSum(
+            summary.modified_option_count,
+            summary.modified_option_sum
+          ),
+          label: t('users.report.summary.modifiedOption'),
+          bg: STAT_CARD_BG.amber,
+        },
+      ]
+    }
 
-    return result
-  }, [contributions, t])
+    return []
+  }, [summary, normalizedRole, t])
 
   if (isLoading) {
     return <UserReportSummarySkeleton />
   }
 
+  if (stats.length === 0) {
+    return null
+  }
+
   return (
-    <div className={`grid gap-3`} style={{ gridTemplateColumns: `repeat(${stats.length}, minmax(0, 1fr))` }}>
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-[repeat(auto-fit,minmax(9rem,1fr))]">
       {stats.map((stat) => (
         <div
           key={stat.label}
-          className={`flex flex-col items-center justify-center rounded-lg p-4 ${stat.bg}`}
+          className={`flex min-h-[5.5rem] flex-col items-center justify-center rounded-lg px-4 py-5 ${stat.bg}`}
         >
-          <stat.icon className={`h-5 w-5 ${stat.color} mb-1`} />
-          <span className="text-xl font-bold">{stat.value}</span>
-          <span className="text-xs text-muted-foreground text-center">{stat.label}</span>
+          <span className="text-2xl font-bold tabular-nums">{stat.value}</span>
+          <span className="mt-1 text-center text-sm text-muted-foreground">{stat.label}</span>
         </div>
       ))}
     </div>
@@ -112,15 +236,16 @@ export function UserReportSummary({ contributions, isLoading }: UserReportSummar
 
 function UserReportSummarySkeleton() {
   return (
-    <div className="grid grid-cols-4 gap-3">
-      {[...Array(4)].map((_, i) => (
-        <div key={i} className="flex flex-col items-center justify-center rounded-lg bg-muted/50 p-4">
-          <Skeleton className="h-5 w-5 mb-1" />
-          <Skeleton className="h-6 w-12 mb-1" />
-          <Skeleton className="h-3 w-16" />
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-7">
+      {[...Array(7)].map((_, i) => (
+        <div
+          key={i}
+          className="flex min-h-[5.5rem] flex-col items-center justify-center rounded-lg bg-muted/70 px-4 py-5"
+        >
+          <Skeleton className="mb-2 h-7 w-14" />
+          <Skeleton className="h-4 w-20" />
         </div>
       ))}
     </div>
   )
 }
-
