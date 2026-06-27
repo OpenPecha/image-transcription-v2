@@ -8,6 +8,15 @@ export {
 } from './user'
 export type * from './user'
 
+export type {
+  Itv2AnnotatorContributionSummary,
+  Itv2ContributionSummary,
+  Itv2ContributionTask,
+  Itv2FinalReviewerContributionSummary,
+  Itv2ReviewerContributionSummary,
+  UserContributionReportResponse,
+} from './user-contribution-report'
+
 // Task types
 export {
   TaskStatus,

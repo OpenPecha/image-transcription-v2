@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { BarChart3, Calendar, FileText } from 'lucide-react'
+import { Calendar, FileText } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -12,10 +12,23 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
+import {
+  formatReportCountSum,
+  formatReportNumber,
+  formatReportPercent,
+  formatReportSignedNumber,
+  getContributionSlotLabelKey,
+  getContributionSummaryForRole,
+} from '@/lib/user-contribution-report'
 import { useGetUserContributions } from '../../api/user'
 import { UserReportSummary } from './user-report-summary'
-import { isLineAlignmentContribution } from '@/types'
-import type { User, UserContribution } from '@/types'
+import {
+  UserRole,
+  normalizeUserRole,
+  type Itv2ContributionTask,
+  type User,
+} from '@/types'
 
 interface UserReportDialogProps {
   open: boolean
@@ -47,15 +60,22 @@ function formatDateTime(isoString: string): string {
 export function UserReportDialog({ open, onOpenChange, user }: UserReportDialogProps) {
   const { t } = useTranslation('admin')
   const defaultRange = useMemo(() => getDefaultDateRange(), [])
+  const normalizedRole = normalizeUserRole(user.role)
 
   const [startDate, setStartDate] = useState(defaultRange.start_date)
   const [endDate, setEndDate] = useState(defaultRange.end_date)
   const [appliedFilters, setAppliedFilters] = useState(defaultRange)
 
-  const { data: contributions = [], isLoading } = useGetUserContributions(
+  const { data: report, isLoading } = useGetUserContributions(
     user.id ?? '',
     appliedFilters,
     open
+  )
+
+  const tasks = report?.tasks ?? []
+  const roleSummary = getContributionSummaryForRole(
+    report?.contribution_summary,
+    user.role
   )
 
   const handleApplyFilter = () => {
@@ -73,19 +93,15 @@ export function UserReportDialog({ open, onOpenChange, user }: UserReportDialogP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-primary" />
+      <DialogContent className="flex h-[90vh] max-h-[92vh] w-[min(96vw,80rem)] max-w-[80rem] flex-col gap-4 overflow-hidden p-6">
+        <DialogHeader className="shrink-0">
+          <DialogTitle>
             {t('users.report.title')} - {user.username}
           </DialogTitle>
-          <DialogDescription>
-            {t('users.report.description')}
-          </DialogDescription>
+          <DialogDescription>{t('users.report.description')}</DialogDescription>
         </DialogHeader>
 
-        {/* Date Range Filters */}
-        <div className="flex items-end gap-3 pb-4 border-b">
+        <div className="flex shrink-0 items-end gap-3 border-b pb-4">
           <div className="flex-1 space-y-1.5">
             <Label htmlFor="start-date" className="text-xs">
               {t('users.report.startDate')}
@@ -98,7 +114,7 @@ export function UserReportDialog({ open, onOpenChange, user }: UserReportDialogP
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="pl-9 h-9 bg-muted/80"
+                className="h-9 bg-muted/80 pl-9"
               />
             </div>
           </div>
@@ -114,7 +130,7 @@ export function UserReportDialog({ open, onOpenChange, user }: UserReportDialogP
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="pl-9 h-9 bg-muted/80"
+                className="h-9 bg-muted/80 pl-9"
               />
             </div>
           </div>
@@ -123,45 +139,20 @@ export function UserReportDialog({ open, onOpenChange, user }: UserReportDialogP
           </Button>
         </div>
 
-        {/* Summary Cards */}
-        <UserReportSummary contributions={contributions} isLoading={isLoading} />
+        <div className="shrink-0">
+          <UserReportSummary role={user.role} summary={roleSummary} isLoading={isLoading} />
+        </div>
 
-        {/* Contributions Table */}
-        <div className="flex-1 min-h-0 overflow-hidden flex flex-col gap-2">
-          <h4 className="text-sm font-medium">{t('users.report.contributions')}</h4>
-          <div className="border rounded-lg overflow-auto flex-1">
-              {isLoading ? (
-                <ContributionsTableSkeleton />
-              ) : contributions.length === 0 ? (
-                <EmptyContributions />
-              ) : (
-                <table className="w-full text-sm">
-                  <thead className="bg-muted sticky top-0">
-                    <tr>
-                      <th className="text-left px-3 py-2 font-medium">
-                        {t('users.report.table.imageName')}
-                      </th>
-                      <th className="text-left px-3 py-2 font-medium">
-                        {t('users.report.table.batch')}
-                      </th>
-                      <th className="text-left px-3 py-2 font-medium">
-                        {t('users.report.table.role')}
-                      </th>
-                      <th className="text-right px-3 py-2 font-medium">
-                        {t('users.report.table.metric')}
-                      </th>
-                      <th className="text-right px-3 py-2 font-medium">
-                        {t('users.report.table.date')}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="h-full">
-                    {contributions.map((item) => (
-                      <ContributionRow key={item.task_id} contribution={item} />
-                    ))}
-                  </tbody>
-                </table>
-              )}
+        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
+          <h4 className="shrink-0 text-sm font-medium">{t('users.report.contributions')}</h4>
+          <div className="min-h-0 flex-1 overflow-auto rounded-lg border">
+            {isLoading ? (
+              <ContributionsTableSkeleton role={normalizedRole} />
+            ) : tasks.length === 0 ? (
+              <EmptyContributions />
+            ) : (
+              <ContributionsTable tasks={tasks} role={normalizedRole} />
+            )}
           </div>
         </div>
       </DialogContent>
@@ -169,33 +160,333 @@ export function UserReportDialog({ open, onOpenChange, user }: UserReportDialogP
   )
 }
 
-interface ContributionRowProps {
-  contribution: UserContribution
+interface ContributionsTableProps {
+  tasks: Itv2ContributionTask[]
+  role: UserRole | undefined
 }
 
-function ContributionRow({ contribution }: ContributionRowProps) {
+function ContributionsTable({ tasks, role }: ContributionsTableProps) {
   const { t } = useTranslation('admin')
-  const isLineAlignment = isLineAlignmentContribution(contribution)
+
+  if (role === UserRole.Annotator) {
+    return (
+      <table className="w-full min-w-max text-sm">
+        <thead className="sticky top-0 z-10 bg-muted">
+          <tr>
+            <th className="px-4 py-2.5 text-left font-medium">
+              {t('users.report.table.imageName')}
+            </th>
+            <th className="px-4 py-2.5 text-left font-medium">
+              {t('users.report.table.batch')}
+            </th>
+            <th className="px-4 py-2.5 text-left font-medium">
+              {t('users.report.table.slot')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.rejections')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.finalChars')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.charDiff')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.percentDiff')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.date')}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {tasks.map((task) => (
+            <AnnotatorContributionRow key={task.task_id} task={task} role={role} />
+          ))}
+        </tbody>
+      </table>
+    )
+  }
+
+  if (role === UserRole.Reviewer) {
+    return (
+      <table className="w-full min-w-max text-sm">
+        <thead className="sticky top-0 z-10 bg-muted">
+          <tr>
+            <th className="px-4 py-2.5 text-left font-medium">
+              {t('users.report.table.imageName')}
+            </th>
+            <th className="px-4 py-2.5 text-left font-medium">
+              {t('users.report.table.batch')}
+            </th>
+            <th className="px-4 py-2.5 text-left font-medium">
+              {t('users.report.table.slot')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.rejections')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.reviewChars')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.reviewCharDiff')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.finalChars')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.charDiff')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.percentDiff')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.ownVersion')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.selectedOption')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.modifiedOption')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.date')}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {tasks.map((task) => (
+            <ReviewerContributionRow key={task.task_id} task={task} role={role} />
+          ))}
+        </tbody>
+      </table>
+    )
+  }
+
+  if (role === UserRole.FinalReviewer) {
+    return (
+      <table className="w-full min-w-max text-sm">
+        <thead className="sticky top-0 z-10 bg-muted">
+          <tr>
+            <th className="px-4 py-2.5 text-left font-medium">
+              {t('users.report.table.imageName')}
+            </th>
+            <th className="px-4 py-2.5 text-left font-medium">
+              {t('users.report.table.batch')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.rejections')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.finalChars')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.charDiff')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.percentDiff')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.ownVersion')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.selectedOption')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.modifiedOption')}
+            </th>
+            <th className="px-4 py-2.5 text-right font-medium">
+              {t('users.report.table.date')}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {tasks.map((task) => (
+            <FinalReviewerContributionRow key={task.task_id} task={task} />
+          ))}
+        </tbody>
+      </table>
+    )
+  }
 
   return (
-    <tr className="border-t hover:bg-muted/30 transition-colors">
-      <td className="px-3 py-2 truncate max-w-[180px]" title={contribution.name}>
-        {contribution.name}
+    <table className="w-full min-w-max text-sm">
+      <thead className="sticky top-0 z-10 bg-muted">
+        <tr>
+          <th className="px-3 py-2 text-left font-medium">
+            {t('users.report.table.imageName')}
+          </th>
+          <th className="px-3 py-2 text-left font-medium">
+            {t('users.report.table.batch')}
+          </th>
+          <th className="px-3 py-2 text-right font-medium">
+            {t('users.report.table.date')}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {tasks.map((task) => (
+          <tr key={task.task_id} className="border-t hover:bg-muted/30 transition-colors">
+            <td className="max-w-[220px] truncate px-4 py-2.5" title={task.name}>
+              {task.name}
+            </td>
+            <td className="px-4 py-2.5">
+              <BatchBadge name={task.batch_name} />
+            </td>
+            <td className="px-4 py-2.5 text-right text-xs text-muted-foreground">
+              {formatDateTime(task.updated_time)}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+}
+
+function BatchBadge({ name }: { name: string }) {
+  return (
+    <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+      {name}
+    </span>
+  )
+}
+
+function RejectionCell({ count }: { count: number }) {
+  if (count <= 0) {
+    return <span className="text-muted-foreground">0</span>
+  }
+
+  return (
+    <span className="font-semibold tabular-nums text-[rgb(255,1,1)]">{count}</span>
+  )
+}
+
+interface ContributionRowProps {
+  task: Itv2ContributionTask
+  role: UserRole
+}
+
+function AnnotatorContributionRow({ task, role }: ContributionRowProps) {
+  const { t } = useTranslation('admin')
+  const slotKey =
+    task.order != null
+      ? getContributionSlotLabelKey(role, task.order)
+      : 'annotatorA'
+
+  return (
+    <tr className="border-t transition-colors hover:bg-muted/30">
+      <td className="max-w-[220px] truncate px-4 py-2.5" title={task.name}>
+        {task.name}
       </td>
-      <td className="px-3 py-2">
-        <span className="inline-flex items-center rounded-md bg-blue-50 dark:bg-blue-950/50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300">
-          {contribution.batch_name}
-        </span>
+      <td className="px-4 py-2.5">
+        <BatchBadge name={task.batch_name} />
       </td>
-      <td className="px-3 py-2 capitalize">{contribution.role}</td>
-      <td className="px-3 py-2 text-right font-mono text-xs">
-        {isLineAlignment
-          ? t('users.report.table.lineCount', { count: contribution.line_count ?? 0 })
-          : `${contribution.char_diff >= 0 ? '+' : ''}${contribution.char_diff}`
-        }
+      <td className="px-4 py-2.5 text-xs">
+        {t(`users.report.table.slots.${slotKey}`)}
       </td>
-      <td className="px-3 py-2 text-right text-muted-foreground text-xs">
-        {formatDateTime(contribution.updated_time)}
+      <td className="px-4 py-2.5 text-right font-mono text-xs">
+        <RejectionCell count={task.rejection_count} />
+      </td>
+      <td className="px-4 py-2.5 text-right font-mono text-xs">
+        {formatReportNumber(task.final_char_count)}
+      </td>
+      <td className="px-4 py-2.5 text-right font-mono text-xs">
+        {formatReportSignedNumber(task.total_char_difference)}
+      </td>
+      <td className="px-4 py-2.5 text-right font-mono text-xs">
+        {formatReportPercent(task.char_percent_diff)}
+      </td>
+      <td className="px-4 py-2.5 text-right text-xs text-muted-foreground">
+        {formatDateTime(task.updated_time)}
+      </td>
+    </tr>
+  )
+}
+
+function ReviewerContributionRow({ task, role }: ContributionRowProps) {
+  const { t } = useTranslation('admin')
+  const slotKey =
+    task.order != null
+      ? getContributionSlotLabelKey(role, task.order)
+      : 'reviewerA'
+
+  return (
+    <tr className="border-t transition-colors hover:bg-muted/30">
+      <td className="max-w-[220px] truncate px-4 py-2.5" title={task.name}>
+        {task.name}
+      </td>
+      <td className="px-4 py-2.5">
+        <BatchBadge name={task.batch_name} />
+      </td>
+      <td className="px-4 py-2.5 text-xs">
+        {t(`users.report.table.slots.${slotKey}`)}
+      </td>
+      <td className="px-4 py-2.5 text-right font-mono text-xs">
+        <RejectionCell count={task.rejection_count} />
+      </td>
+      <td className="px-4 py-2.5 text-right font-mono text-xs">
+        {formatReportNumber(task.review_char_count)}
+      </td>
+      <td className="px-4 py-2.5 text-right font-mono text-xs">
+        {formatReportSignedNumber(task.review_total_char_difference)}
+      </td>
+      <td className="px-4 py-2.5 text-right font-mono text-xs">
+        {formatReportNumber(task.final_char_count)}
+      </td>
+      <td className="px-4 py-2.5 text-right font-mono text-xs">
+        {formatReportSignedNumber(task.total_char_difference)}
+      </td>
+      <td className="px-4 py-2.5 text-right font-mono text-xs">
+        {formatReportPercent(task.char_percent_diff)}
+      </td>
+      <td className="px-4 py-2.5 text-right font-mono text-xs">
+        {formatReportCountSum(task.own_version_count, task.own_version_sum)}
+      </td>
+      <td className="px-4 py-2.5 text-right font-mono text-xs">
+        {formatReportCountSum(task.selected_option_count, task.selected_option_sum)}
+      </td>
+      <td className="px-4 py-2.5 text-right font-mono text-xs">
+        {formatReportCountSum(task.modified_option_count, task.modified_option_sum)}
+      </td>
+      <td className="px-4 py-2.5 text-right text-xs text-muted-foreground">
+        {formatDateTime(task.updated_time)}
+      </td>
+    </tr>
+  )
+}
+
+function FinalReviewerContributionRow({ task }: { task: Itv2ContributionTask }) {
+  return (
+    <tr className="border-t transition-colors hover:bg-muted/30">
+      <td className="max-w-[220px] truncate px-4 py-2.5" title={task.name}>
+        {task.name}
+      </td>
+      <td className="px-4 py-2.5">
+        <BatchBadge name={task.batch_name} />
+      </td>
+      <td className="px-4 py-2.5 text-right font-mono text-xs">
+        <RejectionCell count={task.rejection_count} />
+      </td>
+      <td className="px-4 py-2.5 text-right font-mono text-xs">
+        {formatReportNumber(task.final_char_count)}
+      </td>
+      <td className="px-4 py-2.5 text-right font-mono text-xs">
+        {formatReportSignedNumber(task.total_char_difference)}
+      </td>
+      <td className="px-4 py-2.5 text-right font-mono text-xs">
+        {formatReportPercent(task.char_percent_diff)}
+      </td>
+      <td className="px-4 py-2.5 text-right font-mono text-xs">
+        {formatReportCountSum(task.own_version_count, task.own_version_sum)}
+      </td>
+      <td className="px-4 py-2.5 text-right font-mono text-xs">
+        {formatReportCountSum(task.selected_option_count, task.selected_option_sum)}
+      </td>
+      <td className="px-4 py-2.5 text-right font-mono text-xs">
+        {formatReportCountSum(task.modified_option_count, task.modified_option_sum)}
+      </td>
+      <td className="px-4 py-2.5 text-right text-xs text-muted-foreground">
+        {formatDateTime(task.updated_time)}
       </td>
     </tr>
   )
@@ -205,38 +496,46 @@ function EmptyContributions() {
   const { t } = useTranslation('admin')
 
   return (
-    <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="rounded-full bg-muted p-3 mb-4">
+    <div className="flex h-full min-h-[12rem] flex-col items-center justify-center py-12 text-center">
+      <div className="mb-4 rounded-full bg-muted p-3">
         <FileText className="h-6 w-6 text-muted-foreground" />
       </div>
       <h3 className="text-base font-medium">{t('users.report.noContributions')}</h3>
-      <p className="text-sm text-muted-foreground mt-1">
+      <p className="mt-1 text-sm text-muted-foreground">
         {t('users.report.noContributionsHint')}
       </p>
     </div>
   )
 }
 
-function ContributionsTableSkeleton() {
+function ContributionsTableSkeleton({ role }: { role: UserRole | undefined }) {
+  const colCount =
+    role === UserRole.Annotator
+      ? 8
+      : role === UserRole.Reviewer
+        ? 13
+        : role === UserRole.FinalReviewer
+          ? 10
+          : 3
+
   return (
     <div className="space-y-0">
-      <div className="flex items-center gap-4 px-3 py-2 bg-muted/50">
-        <Skeleton className="h-4 w-32" />
-        <Skeleton className="h-4 w-16" />
-        <Skeleton className="h-4 w-20" />
-        <Skeleton className="h-4 w-12 ml-auto" />
-        <Skeleton className="h-4 w-24" />
+      <div className={cn('grid gap-4 bg-muted/50 px-3 py-2')} style={{ gridTemplateColumns: `repeat(${colCount}, minmax(0, 1fr))` }}>
+        {[...Array(colCount)].map((_, i) => (
+          <Skeleton key={i} className="h-4 w-full" />
+        ))}
       </div>
       {[...Array(5)].map((_, i) => (
-        <div key={i} className="flex items-center gap-4 px-3 py-2 border-t">
-          <Skeleton className="h-4 w-40" />
-          <Skeleton className="h-5 w-12 rounded-md" />
-          <Skeleton className="h-4 w-16" />
-          <Skeleton className="h-4 w-10 ml-auto" />
-          <Skeleton className="h-4 w-20" />
+        <div
+          key={i}
+          className="grid gap-4 border-t px-3 py-2"
+          style={{ gridTemplateColumns: `repeat(${colCount}, minmax(0, 1fr))` }}
+        >
+          {[...Array(colCount)].map((_, j) => (
+            <Skeleton key={j} className="h-4 w-full" />
+          ))}
         </div>
       ))}
     </div>
   )
 }
-

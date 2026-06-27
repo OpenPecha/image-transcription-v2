@@ -1,17 +1,34 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/lib/axios'
-import { type UserContribution, type UserContributionFilters } from '@/types'
+import { APPLICATION_NAME } from '@/lib/constant'
+import { emptyContributionReport } from '@/lib/user-contribution-report'
+import type { UserContributionFilters, UserContributionReportResponse } from '@/types'
 import { userKeys } from './user-keys'
 
 const getUserContributions = async (
   userId: string,
   filters: UserContributionFilters
-): Promise<UserContribution[]> => {
+): Promise<UserContributionReportResponse> => {
   const params = new URLSearchParams()
   params.append('start_date', filters.start_date)
   params.append('end_date', filters.end_date)
 
-  return apiClient.get(`/user/${userId}/contributions?${params.toString()}`)
+  const response = (await apiClient.get(
+    `/tasks/${APPLICATION_NAME}/${userId}/contributions?${params.toString()}`
+  )) as UserContributionReportResponse
+
+  if (!response || !Array.isArray(response.tasks)) {
+    return emptyContributionReport()
+  }
+
+  return {
+    tasks: response.tasks,
+    contribution_summary: response.contribution_summary ?? {
+      annotator: null,
+      reviewer: null,
+      final_reviewer: null,
+    },
+  }
 }
 
 export const useGetUserContributions = (
@@ -27,4 +44,3 @@ export const useGetUserContributions = (
     enabled: enabled && !!userId && !!filters.start_date && !!filters.end_date,
   })
 }
-
