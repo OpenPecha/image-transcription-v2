@@ -57,6 +57,9 @@ function formatDateTime(isoString: string): string {
   })
 }
 
+const contributionTableHeadCellClass =
+  'sticky top-[-20px] z-20 bg-muted px-4 py-2.5 font-medium shadow-[0_1px_0_0_hsl(var(--border))]'
+
 export function UserReportDialog({ open, onOpenChange, user }: UserReportDialogProps) {
   const { t } = useTranslation('admin')
   const defaultRange = useMemo(() => getDefaultDateRange(), [])
@@ -93,7 +96,7 @@ export function UserReportDialog({ open, onOpenChange, user }: UserReportDialogP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[90vh] max-h-[92vh] w-[min(96vw,80rem)] max-w-[80rem] flex-col gap-4 overflow-hidden p-6">
+      <DialogContent className="flex h-[min(90dvh,920px)] max-h-[92dvh] w-[min(96vw,80rem)] max-w-[80rem] flex-col gap-0 overflow-hidden p-4 sm:p-6">
         <DialogHeader className="shrink-0">
           <DialogTitle>
             {t('users.report.title')} - {user.username}
@@ -101,7 +104,7 @@ export function UserReportDialog({ open, onOpenChange, user }: UserReportDialogP
           <DialogDescription>{t('users.report.description')}</DialogDescription>
         </DialogHeader>
 
-        <div className="flex shrink-0 items-end gap-3 border-b pb-4">
+        <div className="flex shrink-0 items-end gap-3 border-b pb-4 pt-4">
           <div className="flex-1 space-y-1.5">
             <Label htmlFor="start-date" className="text-xs">
               {t('users.report.startDate')}
@@ -139,20 +142,21 @@ export function UserReportDialog({ open, onOpenChange, user }: UserReportDialogP
           </Button>
         </div>
 
-        <div className="shrink-0">
-          <UserReportSummary role={user.role} summary={roleSummary} isLoading={isLoading} />
-        </div>
+        <div className="min-h-0 flex-1 overflow-auto pt-4">
+          <div className="flex flex-col gap-4">
+            <UserReportSummary role={user.role} summary={roleSummary} isLoading={isLoading} />
 
-        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
-          <h4 className="shrink-0 text-sm font-medium">{t('users.report.contributions')}</h4>
-          <div className="min-h-0 flex-1 overflow-auto rounded-lg border">
-            {isLoading ? (
-              <ContributionsTableSkeleton role={normalizedRole} />
-            ) : tasks.length === 0 ? (
-              <EmptyContributions />
-            ) : (
-              <ContributionsTable tasks={tasks} role={normalizedRole} />
-            )}
+            <h4 className="text-sm font-medium">{t('users.report.contributions')}</h4>
+
+            <div className="rounded-lg border">
+              {isLoading ? (
+                <ContributionsTableSkeleton role={normalizedRole} />
+              ) : tasks.length === 0 ? (
+                <EmptyContributions />
+              ) : (
+                <ContributionsTable tasks={tasks} role={normalizedRole} />
+              )}
+            </div>
           </div>
         </div>
       </DialogContent>
@@ -171,30 +175,30 @@ function ContributionsTable({ tasks, role }: ContributionsTableProps) {
   if (role === UserRole.Annotator) {
     return (
       <table className="w-full min-w-max text-sm">
-        <thead className="sticky top-0 z-10 bg-muted">
+        <thead>
           <tr>
-            <th className="px-4 py-2.5 text-left font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-left')}>
               {t('users.report.table.imageName')}
             </th>
-            <th className="px-4 py-2.5 text-left font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-left')}>
               {t('users.report.table.batch')}
             </th>
-            <th className="px-4 py-2.5 text-left font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-left')}>
               {t('users.report.table.slot')}
             </th>
-            <th className="px-4 py-2.5 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('users.report.table.rejections')}
             </th>
-            <th className="px-4 py-2.5 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('users.report.table.finalChars')}
             </th>
-            <th className="px-4 py-2.5 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('users.report.table.charDiff')}
             </th>
-            <th className="px-4 py-2.5 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('users.report.table.percentDiff')}
             </th>
-            <th className="px-4 py-2.5 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('users.report.table.date')}
             </th>
           </tr>
@@ -211,45 +215,45 @@ function ContributionsTable({ tasks, role }: ContributionsTableProps) {
   if (role === UserRole.Reviewer) {
     return (
       <table className="w-full min-w-max text-sm">
-        <thead className="sticky top-0 z-10 bg-muted">
+        <thead>
           <tr>
-            <th className="px-4 py-2.5 text-left font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-left')}>
               {t('users.report.table.imageName')}
             </th>
-            <th className="px-4 py-2.5 text-left font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-left')}>
               {t('users.report.table.batch')}
             </th>
-            <th className="px-4 py-2.5 text-left font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-left')}>
               {t('users.report.table.slot')}
             </th>
-            <th className="px-4 py-2.5 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('users.report.table.rejections')}
             </th>
-            <th className="px-4 py-2.5 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('users.report.table.reviewChars')}
             </th>
-            <th className="px-4 py-2.5 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('users.report.table.reviewCharDiff')}
             </th>
-            <th className="px-4 py-2.5 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('users.report.table.finalChars')}
             </th>
-            <th className="px-4 py-2.5 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('users.report.table.charDiff')}
             </th>
-            <th className="px-4 py-2.5 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('users.report.table.percentDiff')}
             </th>
-            <th className="px-4 py-2.5 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('users.report.table.ownVersion')}
             </th>
-            <th className="px-4 py-2.5 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('users.report.table.selectedOption')}
             </th>
-            <th className="px-4 py-2.5 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('users.report.table.modifiedOption')}
             </th>
-            <th className="px-4 py-2.5 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('users.report.table.date')}
             </th>
           </tr>
@@ -266,36 +270,36 @@ function ContributionsTable({ tasks, role }: ContributionsTableProps) {
   if (role === UserRole.FinalReviewer) {
     return (
       <table className="w-full min-w-max text-sm">
-        <thead className="sticky top-0 z-10 bg-muted">
+        <thead>
           <tr>
-            <th className="px-4 py-2.5 text-left font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-left')}>
               {t('users.report.table.imageName')}
             </th>
-            <th className="px-4 py-2.5 text-left font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-left')}>
               {t('users.report.table.batch')}
             </th>
-            <th className="px-4 py-2.5 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('users.report.table.rejections')}
             </th>
-            <th className="px-4 py-2.5 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('users.report.table.finalChars')}
             </th>
-            <th className="px-4 py-2.5 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('users.report.table.charDiff')}
             </th>
-            <th className="px-4 py-2.5 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('users.report.table.percentDiff')}
             </th>
-            <th className="px-4 py-2.5 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('users.report.table.ownVersion')}
             </th>
-            <th className="px-4 py-2.5 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('users.report.table.selectedOption')}
             </th>
-            <th className="px-4 py-2.5 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('users.report.table.modifiedOption')}
             </th>
-            <th className="px-4 py-2.5 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('users.report.table.date')}
             </th>
           </tr>
@@ -311,15 +315,15 @@ function ContributionsTable({ tasks, role }: ContributionsTableProps) {
 
   return (
     <table className="w-full min-w-max text-sm">
-      <thead className="sticky top-0 z-10 bg-muted">
+      <thead>
         <tr>
-          <th className="px-3 py-2 text-left font-medium">
+          <th className={cn(contributionTableHeadCellClass, 'px-3 py-2 text-left')}>
             {t('users.report.table.imageName')}
           </th>
-          <th className="px-3 py-2 text-left font-medium">
+          <th className={cn(contributionTableHeadCellClass, 'px-3 py-2 text-left')}>
             {t('users.report.table.batch')}
           </th>
-          <th className="px-3 py-2 text-right font-medium">
+          <th className={cn(contributionTableHeadCellClass, 'px-3 py-2 text-right')}>
             {t('users.report.table.date')}
           </th>
         </tr>
@@ -496,7 +500,7 @@ function EmptyContributions() {
   const { t } = useTranslation('admin')
 
   return (
-    <div className="flex h-full min-h-[12rem] flex-col items-center justify-center py-12 text-center">
+    <div className="flex min-h-[12rem] flex-col items-center justify-center py-12 text-center">
       <div className="mb-4 rounded-full bg-muted p-3">
         <FileText className="h-6 w-6 text-muted-foreground" />
       </div>
