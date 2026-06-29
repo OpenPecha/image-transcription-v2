@@ -1,7 +1,9 @@
 import type {
   Itv2AnnotatorContributionSummary,
+  Itv2ContributionRejectionMetrics,
   Itv2ContributionSummary,
   Itv2FinalReviewerContributionSummary,
+  Itv2RejectionsMadeMetrics,
   Itv2ReviewerContributionSummary,
   UserContributionReportResponse,
 } from '@/types/user-contribution-report'
@@ -23,6 +25,41 @@ export function getContributionSummaryForRole(
   if (normalized === UserRole.Reviewer) return summary.reviewer
   if (normalized === UserRole.FinalReviewer) return summary.final_reviewer
   return null
+}
+
+export function getSummaryRejectedCount(
+  summary: Itv2ContributionRejectionMetrics | null | undefined
+): number {
+  if (!summary) return 0
+  return summary.rejected_count ?? summary.rejection_count ?? 0
+}
+
+export function getSummaryRejectedPercent(
+  summary: Itv2ContributionRejectionMetrics | null | undefined
+): number | undefined {
+  if (!summary) return undefined
+  return summary.rejected_percent ?? summary.rejection_percent
+}
+
+export function getSummaryUnrejectedTasksPercent(
+  summary: Itv2ContributionRejectionMetrics | null | undefined
+): number | undefined {
+  if (!summary) return undefined
+  return summary.unrejected_tasks_percent ?? summary.unrejected_percent
+}
+
+export function getSummaryRejectionsMadeCount(
+  summary: Itv2RejectionsMadeMetrics | null | undefined
+): number {
+  if (!summary) return 0
+  return summary.rejections_made_count ?? summary.rejections_made ?? 0
+}
+
+export function getSummaryRejectionsMadePercent(
+  summary: (Itv2RejectionsMadeMetrics & Itv2ContributionRejectionMetrics) | null | undefined
+): number | undefined {
+  if (!summary) return undefined
+  return summary.rejections_made_percent ?? summary.rejection_percent
 }
 
 export function emptyContributionReport(): UserContributionReportResponse {

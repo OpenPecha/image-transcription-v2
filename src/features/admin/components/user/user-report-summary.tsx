@@ -6,6 +6,11 @@ import {
   formatReportNumber,
   formatReportPercent,
   formatReportSignedNumber,
+  getSummaryRejectedCount,
+  getSummaryRejectedPercent,
+  getSummaryRejectionsMadeCount,
+  getSummaryRejectionsMadePercent,
+  getSummaryUnrejectedTasksPercent,
   type Itv2ReportRoleSummary,
 } from '@/lib/user-contribution-report'
 import {
@@ -66,23 +71,28 @@ export function UserReportSummary({ role, summary, isLoading }: UserReportSummar
     if (normalizedRole === UserRole.Annotator && isAnnotatorSummary(summary)) {
       return [
         {
-          value: summary.tasks_annotated,
+          value: summary.tasks_annotated ?? summary.total_count ?? 0,
           label: t('users.report.summary.tasksCompleted'),
           bg: STAT_CARD_BG.emerald,
         },
         {
-          value: summary.tasks_final_reviewed,
+          value: summary.tasks_final_reviewed ?? 0,
           label: t('users.report.summary.tasksFinalReviewed'),
           bg: STAT_CARD_BG.sky,
         },
         {
-          value: summary.rejection_count,
+          value: getSummaryRejectedCount(summary),
           label: t('users.report.summary.rejectionCount'),
           bg: STAT_CARD_BG.red,
         },
         {
-          value: formatReportPercent(summary.unrejected_percent),
-          label: t('users.report.summary.passRate'),
+          value: formatReportPercent(getSummaryRejectedPercent(summary)),
+          label: t('users.report.summary.rejectedPercent'),
+          bg: STAT_CARD_BG.red,
+        },
+        {
+          value: formatReportPercent(getSummaryUnrejectedTasksPercent(summary)),
+          label: t('users.report.summary.unrejectedPercent'),
           bg: STAT_CARD_BG.violet,
         },
         {
@@ -116,13 +126,18 @@ export function UserReportSummary({ role, summary, isLoading }: UserReportSummar
           bg: STAT_CARD_BG.sky,
         },
         {
-          value: summary.rejection_count ?? 0,
+          value: getSummaryRejectedCount(summary),
           label: t('users.report.summary.rejectionCount'),
           bg: STAT_CARD_BG.red,
         },
         {
-          value: formatReportPercent(summary.unrejected_percent),
-          label: t('users.report.summary.passRate'),
+          value: formatReportPercent(getSummaryRejectedPercent(summary)),
+          label: t('users.report.summary.rejectedPercent'),
+          bg: STAT_CARD_BG.red,
+        },
+        {
+          value: formatReportPercent(getSummaryUnrejectedTasksPercent(summary)),
+          label: t('users.report.summary.unrejectedPercent'),
           bg: STAT_CARD_BG.violet,
         },
         {
@@ -151,8 +166,13 @@ export function UserReportSummary({ role, summary, isLoading }: UserReportSummar
           bg: STAT_CARD_BG.orange,
         },
         {
-          value: summary.rejections_made ?? 0,
+          value: getSummaryRejectionsMadeCount(summary),
           label: t('users.report.summary.rejectionsMade'),
+          bg: STAT_CARD_BG.red,
+        },
+        {
+          value: formatReportPercent(getSummaryRejectionsMadePercent(summary)),
+          label: t('users.report.summary.rejectionsMadePercent'),
           bg: STAT_CARD_BG.red,
         },
         {
@@ -185,18 +205,23 @@ export function UserReportSummary({ role, summary, isLoading }: UserReportSummar
     if (normalizedRole === UserRole.FinalReviewer && isFinalReviewerSummary(summary)) {
       return [
         {
-          value: summary.tasks_finalised,
+          value: summary.tasks_finalised ?? summary.total_count ?? 0,
           label: t('users.report.summary.tasksFinalised'),
           bg: STAT_CARD_BG.emerald,
         },
         {
-          value: summary.rejections_made,
+          value: getSummaryRejectionsMadeCount(summary),
           label: t('users.report.summary.rejectionsMade'),
           bg: STAT_CARD_BG.red,
         },
         {
-          value: formatReportPercent(summary.unrejected_percent),
-          label: t('users.report.summary.passRate'),
+          value: formatReportPercent(getSummaryRejectionsMadePercent(summary)),
+          label: t('users.report.summary.rejectionsMadePercent'),
+          bg: STAT_CARD_BG.red,
+        },
+        {
+          value: formatReportPercent(getSummaryUnrejectedTasksPercent(summary)),
+          label: t('users.report.summary.unrejectedPercent'),
           bg: STAT_CARD_BG.violet,
         },
         {
