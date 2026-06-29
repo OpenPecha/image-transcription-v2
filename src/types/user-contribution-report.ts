@@ -21,30 +21,47 @@ export interface Itv2ContributionTask {
   modified_option_sum?: number | null
 }
 
-export interface Itv2AnnotatorContributionSummary {
+/** Shared rejection / pass-rate fields on contribution summaries (API renamed in 2026-06). */
+export interface Itv2ContributionRejectionMetrics {
+  /** @deprecated Use `rejected_count` */
+  rejection_count?: number
+  rejected_count?: number
+  /** @deprecated Use `rejected_percent` */
+  rejection_percent?: number
+  rejected_percent?: number
+  /** @deprecated Use `unrejected_tasks_percent` */
+  unrejected_percent?: number
+  unrejected_tasks_percent?: number
+}
+
+/** Rejections initiated by the user (reviewer / final reviewer). */
+export interface Itv2RejectionsMadeMetrics {
+  /** @deprecated Use `rejections_made_count` */
+  rejections_made?: number
+  rejections_made_count?: number
+  /** @deprecated Use `rejections_made_percent` */
+  rejections_made_percent?: number
+}
+
+export interface Itv2AnnotatorContributionSummary extends Itv2ContributionRejectionMetrics {
   total_count: number
   tasks_annotated: number
   tasks_final_reviewed: number
-  rejection_count: number
-  unrejected_percent: number
   final_char_count: number
   total_char_difference: number
   char_percent_diff: number
 }
 
-export interface Itv2ReviewerContributionSummary {
+export interface Itv2ReviewerContributionSummary
+  extends Itv2ContributionRejectionMetrics, Itv2RejectionsMadeMetrics {
   total_count?: number
   tasks_reviewed?: number
   tasks_final_reviewed?: number
-  rejection_count?: number
-  unrejected_percent?: number
   final_char_count?: number
   total_char_difference?: number
   char_percent_diff?: number
   review_char_count?: number
   review_total_char_difference?: number
-  rejections_made?: number
-  rejection_percent?: number
   own_version_count?: number
   own_version_sum?: number
   selected_option_count?: number
@@ -53,12 +70,10 @@ export interface Itv2ReviewerContributionSummary {
   modified_option_sum?: number
 }
 
-export interface Itv2FinalReviewerContributionSummary {
+export interface Itv2FinalReviewerContributionSummary
+  extends Itv2ContributionRejectionMetrics, Itv2RejectionsMadeMetrics {
   total_count: number
   tasks_finalised: number
-  rejections_made: number
-  rejection_percent: number
-  unrejected_percent: number
   final_char_count: number
   total_char_difference: number
   char_percent_diff: number
