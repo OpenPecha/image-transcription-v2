@@ -8,10 +8,18 @@ import React, {
 import { Auth0Provider, useAuth0 } from '@auth0/auth0-react'
 import { setAuthTokenGetter } from '@/lib/auth'
 import { AuthContext } from './auth-context'
-import { UserRole, normalizeUserRole } from '@/types'
+import {
+  clearDevUserEmail,
+  getDevUserPostLoginPath,
+  isDevAuthEnabled,
+  persistDevUserEmail,
+  readStoredDevUserEmail,
+  resolveDevUserEmail,
+} from './dev-users'
+import { getUserByIdentifier } from './get-user-by-identifier'
 import type { User } from '@/types'
-import { apiClient } from '@/lib/axios'
 import { useQuery } from '@tanstack/react-query'
+
 interface AuthProviderProps {
   children: ReactNode
 }
@@ -29,14 +37,8 @@ function getEmailIdentifierOverride(): string | null {
   return sessionStorage.getItem(EMAIL_IDENTIFIER_OVERRIDE_KEY)
 }
 
-// API call to fetch user
-async function getUserDetails(email: string): Promise<User> {
-  const date = new Date().toISOString()
-  const user = (await apiClient.get(`/user/by-identifier/${email}?date=${date}`)) as User
-  if (user?.role) {
-    user.role = normalizeUserRole(user.role) ?? user.role
-  }
-  return user
+function getQueryErrorStatus(error: Error | null): number | undefined {
+  return (error as { response?: { status: number } } | null)?.response?.status
 }
 
 // Inner provider that uses Auth0 hooks
@@ -51,7 +53,6 @@ const AuthContextProvider: React.FC<AuthProviderProps> = ({ children }) => {
     error,
   } = useAuth0()
 
-  // Set up API token getter when authenticated
   useEffect(() => {
     if (isAuthenticated) {
       setAuthTokenGetter(getAccessTokenSilently)
@@ -60,7 +61,6 @@ const AuthContextProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const identifierEmail = getEmailIdentifierOverride() ?? auth0User?.email ?? null
 
-  // React Query to fetch and manage user details
   const {
     data: userDetails,
     isLoading: isQueryLoading,
@@ -70,13 +70,12 @@ const AuthContextProvider: React.FC<AuthProviderProps> = ({ children }) => {
     queryFn: async () => {
       const token = await getAccessTokenSilently()
       localStorage.setItem('auth_token', token)
-      return await getUserDetails(identifierEmail!)
+      return await getUserByIdentifier(identifierEmail!)
     },
     enabled: isAuthenticated && !!identifierEmail && !auth0Loading,
     retry: false,
   })
 
-  // Compute currentUser with fallback if query fails
   const currentUser = useMemo(() => {
     if (userDetails) return userDetails
     if (isAuthenticated && identifierEmail && !isQueryLoading && queryError) {
@@ -85,13 +84,12 @@ const AuthContextProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return null
   }, [userDetails, isAuthenticated, identifierEmail, isQueryLoading, queryError])
 
-  // Compute isPendingApproval from 404 API status code
   const isPendingApproval = useMemo(() => {
-    return !!(queryError && (queryError as any).response?.status === 404)
+    return getQueryErrorStatus(queryError) === 404
   }, [queryError])
 
-  // Combined loading state
   const isLoading = auth0Loading || (isAuthenticated && isQueryLoading && !currentUser)
+
   const getToken = useCallback(async (): Promise<string | null> => {
     try {
       const token = await getAccessTokenSilently()
@@ -105,7 +103,7 @@ const AuthContextProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [getAccessTokenSilently])
 
-  const login = useCallback(() => {
+  const login = useCallback((_email?: string) => {
     loginWithRedirect({
       authorizationParams: {
         redirect_uri: `${window.location.origin}/callback`,
@@ -114,7 +112,6 @@ const AuthContextProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [loginWithRedirect])
 
   const logout = useCallback(() => {
-    // Clear stored tokens
     localStorage.removeItem('auth_token')
     sessionStorage.removeItem(EMAIL_IDENTIFIER_OVERRIDE_KEY)
 
@@ -143,90 +140,79 @@ const AuthContextProvider: React.FC<AuthProviderProps> = ({ children }) => {
   )
 }
 
-// Dev mode mock provider for testing without Auth0
+// Dev mode: skip Auth0, resolve user via GET /user/by-identifier/{email}
 const DevAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [identifierEmail, setIdentifierEmail] = useState<string | null>(() => {
+    const params = new URLSearchParams(window.location.search)
+    return resolveDevUserEmail(params.get('email')) ?? readStoredDevUserEmail()
+  })
+
+  const {
+    data: userDetails,
+    isLoading: isQueryLoading,
+    error: queryError,
+  } = useQuery<User, Error>({
+    queryKey: ['dev-user-details', identifierEmail],
+    queryFn: () => getUserByIdentifier(identifierEmail!),
+    enabled: !!identifierEmail,
+    retry: false,
+  })
+
+  const currentUser = userDetails ?? null
+  const isAuthenticated = !!currentUser
 
   useEffect(() => {
-    // Check for stored dev user
-    const storedUser = localStorage.getItem('dev_user')
-    if (storedUser) {
-      const user = JSON.parse(storedUser)
-      setTimeout(() => {
-        setCurrentUser(user)
-        setIsLoading(false)
-      }, 0)
+    if (!userDetails || !identifierEmail) return
+
+    persistDevUserEmail(identifierEmail)
+
+    if (window.location.pathname === '/login') {
+      window.location.href = getDevUserPostLoginPath(userDetails.role)
     }
+  }, [userDetails, identifierEmail])
+
+  const beginDevLogin = useCallback((email: string) => {
+    const normalizedEmail = email.trim().toLowerCase()
+    persistDevUserEmail(normalizedEmail)
+    setIdentifierEmail(normalizedEmail)
   }, [])
 
-  const login = useCallback(() => {
-    // Check URL query parameters for dev testing overrides (e.g. ?role=reviewer&id=real_id)
+  const login = useCallback((emailOverride?: string) => {
     const params = new URLSearchParams(window.location.search)
-    const idParam = params.get('id')
-    const usernameParam = params.get('username')
-    const emailParam = params.get('email')
-    const roleParam = params.get('role')
+    const email = resolveDevUserEmail(emailOverride ?? params.get('email'))
 
-    let devRole: UserRole = UserRole.Annotator
-    if (roleParam === 'reviewer' || roleParam === 'reveiwer') {
-      devRole = UserRole.Reviewer
-    } else if (roleParam === 'final_reviewer' || roleParam === 'final reviewer') {
-      devRole = UserRole.FinalReviewer
-    } else if (roleParam === 'admin') {
-      devRole = UserRole.Admin
-    } else if (roleParam === 'annotator') {
-      devRole = UserRole.Annotator
-    } else if (roleParam) {
-      devRole = roleParam as UserRole
+    if (!email) {
+      console.error('Dev login requires an email')
+      return
     }
 
-    let devUser: User = {
-      id: idParam || 'u2',
-      username: usernameParam || 'Pema Lhamo',
-      email: emailParam || 'pema@example.com',
-      role: devRole,
-      group_id: 'g1',
-    }
-
-    // Adjust defaults if role is reviewer and no custom values are provided
-    if (roleParam === 'reviewer' && !idParam) {
-      devUser.id = 'u3'
-      devUser.username = usernameParam || 'Jampa Tenzin'
-      devUser.email = emailParam || 'jampa@example.com'
-    } else if (roleParam === 'final_reviewer' && !idParam) {
-      devUser.id = 'u4'
-      devUser.username = usernameParam || 'Tashi Dekyi'
-      devUser.email = emailParam || 'tashi@example.com'
-    } else if (roleParam === 'admin' && !idParam) {
-      devUser.id = 'u1'
-      devUser.username = usernameParam || 'Admin User'
-      devUser.email = emailParam || 'admin@example.com'
-    }
-
-    localStorage.setItem('dev_user', JSON.stringify(devUser))
-    setCurrentUser(devUser)
-    window.location.href = '/workspace'
-  }, [])
+    beginDevLogin(email)
+  }, [beginDevLogin])
 
   const logout = useCallback(() => {
-    localStorage.removeItem('dev_user')
-    setCurrentUser(null)
+    clearDevUserEmail()
+    setIdentifierEmail(null)
     window.location.href = '/login'
   }, [])
 
   const getToken = useCallback(async () => 'dev-token', [])
 
+  const isLoading = !!identifierEmail && isQueryLoading && !currentUser
+
+  const isPendingApproval = useMemo(() => {
+    return getQueryErrorStatus(queryError) === 404
+  }, [queryError])
+
   const contextValue = useMemo(() => ({
-    isAuthenticated: !!currentUser,
+    isAuthenticated,
     isLoading,
     currentUser,
     login,
     logout,
     getToken,
-    error: null,
-    isPendingApproval: false,
-  }), [currentUser, isLoading, login, logout, getToken])
+    error: queryError?.message ?? null,
+    isPendingApproval,
+  }), [isAuthenticated, isLoading, currentUser, login, logout, getToken, queryError, isPendingApproval])
 
   return (
     <AuthContext.Provider value={contextValue}>
@@ -235,29 +221,16 @@ const DevAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   )
 }
 
-// Main provider that wraps everything with Auth0
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const domain = import.meta.env.VITE_AUTH0_DOMAIN
   const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID
   const audience = import.meta.env.VITE_AUTH0_AUDIENCE
   const redirectUri = import.meta.env.VITE_AUTH0_REDIRECT_URI || `${window.location.origin}/callback`
-  const useDevAuth = import.meta.env.VITE_DEV_AUTH === 'true'
-  
-  // Check if we should use dev auth (explicitly enabled, dev mode flag in URL, or Auth0 not configured)
-  const urlParams = new URLSearchParams(window.location.search)
-  const devModeFromUrl = urlParams.get('dev') === 'true'
-  const storedDevMode = localStorage.getItem('dev_auth_mode') === 'true'
 
-  // Persist dev mode if set via URL
-  if (devModeFromUrl && !storedDevMode) {
-    localStorage.setItem('dev_auth_mode', 'true')
-  }
+  const shouldUseDevAuth = isDevAuthEnabled()
 
-  const shouldUseDevAuth = useDevAuth || devModeFromUrl || storedDevMode || !domain || !clientId
-
-  // Use dev provider if enabled
   if (shouldUseDevAuth) {
-    console.warn('Using dev auth provider.')
+    console.warn('Using dev auth provider — GET /user/by-identifier/{email}, no Auth0.')
     return <DevAuthProvider>{children}</DevAuthProvider>
   }
 

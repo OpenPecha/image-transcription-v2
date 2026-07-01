@@ -67,11 +67,19 @@
     "reject": {
       "choose": {
         "title": "Reject Annotators",
-        "description": "Choose which annotator to send \"{{taskName}}\" back for rework."
+        "description": "Send \"{{taskName}}\" back for rework.",
+        "targetPrompt": "Who should redo this task?",
+        "commentLabel": "Rejection comment (required)",
+        "commentPlaceholder": "Explain what needs to be fixed…",
+        "confirm": "Confirm rejection"
       },
       "chooseReviewers": {
         "title": "Reject Reviewers",
-        "description": "Choose which reviewer to send \"{{taskName}}\" back for rework."
+        "description": "Send \"{{taskName}}\" back for rework.",
+        "targetPrompt": "Who should redo this task?",
+        "commentLabel": "Rejection comment (required)",
+        "commentPlaceholder": "Explain what needs to be fixed…",
+        "confirm": "Confirm rejection"
       },
       "annotatorA": {
         "title": "Reject Annotator A",
@@ -115,6 +123,18 @@
       "priorReviewRejections": "Prior review rejections",
       "slotCount": "{{slot}}: {{count}}"
     }
+  },
+  "rejectionHistory": {
+    "trigger": "Rejection History",
+    "title": "Rejection History",
+    "description": "Comments from prior rejections, newest first.",
+    "target": {
+      "annotatorA": "Annotator A",
+      "annotatorB": "Annotator B",
+      "reviewerA": "Reviewer A",
+      "reviewerB": "Reviewer B"
+    },
+    "resize": "Resize rejection history panel"
   },
   "branding": {
     "appName": "Image Transcription V2"

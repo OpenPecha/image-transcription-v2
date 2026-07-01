@@ -6,8 +6,8 @@ This guide walks a new developer through setting up TextAlign locally from scrat
 
 - **Node.js** 18 or later ([download](https://nodejs.org))
 - **npm** 9+ (bundled with Node)
-- An **Auth0** account and application (see [Auth0 Setup](#auth0-setup) below)
 - Access to the backend API (deployed separately)
+- An **Auth0** account and application — only if you are **not** using dev auth (see [Auth0 Setup](#auth0-setup) below)
 
 ## 1. Clone and Install
 
@@ -19,7 +19,31 @@ npm install
 
 ## 2. Environment Variables
 
-Create a `.env` file at the project root. The app will not start correctly without these values.
+Create a `.env` file at the project root.
+
+> All variables must be prefixed with `VITE_` to be exposed to the browser by Vite.
+
+### Option A — Local dev without Auth0 (recommended for UI work)
+
+Skip Auth0 and sign in with a test user email. The app loads the user profile from `GET /user/by-identifier/{email}` on the backend.
+
+```env
+VITE_BASE_URL=http://localhost:8000
+VITE_DEV_AUTH=true
+```
+
+| Variable | Description |
+|---|---|
+| `VITE_BASE_URL` | Backend API base URL. Defaults to `http://localhost:3000` if omitted. |
+| `VITE_DEV_AUTH` | Set to `true` to bypass Auth0. API requests use a placeholder `dev-token`. |
+
+**Sign in:** open `/login`, enter a user email that exists in the backend (for example `annotator_1@itv2_ume.e2e-test.local`), then click **Dev sign in**. You can also pass `?email=user@example.com` in the URL.
+
+Dev auth is also enabled automatically when Auth0 credentials are missing, or when `?dev=true` is in the URL (stored in `localStorage` as `dev_auth_mode`).
+
+### Option B — Full Auth0 login
+
+Use this when testing the real authentication flow.
 
 ```env
 # Base URL of the backend REST API
@@ -37,8 +61,9 @@ VITE_AUTH0_AUDIENCE=your-api-audience
 | `VITE_AUTH0_DOMAIN` | Your Auth0 tenant domain (e.g. `dev-xxxx.us.auth0.com`). |
 | `VITE_AUTH0_CLIENT_ID` | Client ID from your Auth0 Single Page Application. |
 | `VITE_AUTH0_AUDIENCE` | The API identifier registered in Auth0. Required for access tokens. |
+| `VITE_AUTH0_REDIRECT_URI` | Optional. Defaults to `{origin}/callback`. |
 
-> All variables must be prefixed with `VITE_` to be exposed to the browser by Vite.
+Do **not** set `VITE_DEV_AUTH=true` when using Auth0. Clear `dev_auth_mode` and `dev_user_email` from browser `localStorage` if you previously used dev auth.
 
 ## 3. Auth0 Setup
 

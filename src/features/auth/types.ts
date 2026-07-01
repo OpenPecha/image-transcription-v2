@@ -4,7 +4,7 @@ export interface AuthContextType {
   isAuthenticated: boolean
   isLoading: boolean
   currentUser: User | null
-  login: () => void
+  login: (email?: string) => void
   logout: () => void
   getToken: () => Promise<string | null>
   error: string | null

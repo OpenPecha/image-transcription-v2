@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator'
 import { ThemeToggle, LanguageToggle, TaskFileName } from '@/components/common'
 import type { AssignedTask } from '@/types'
 import { TaskRejectionInfo } from './task-rejection-info'
+import { RejectionHistory } from './rejection-history'
 
 interface WorkspaceSidebarProps {
   task: AssignedTask | null
@@ -143,6 +144,7 @@ export function WorkspaceSidebar({
                   )}>
                   </div>
                   <TaskRejectionInfo task={task} role={currentUser.role} />
+                  <RejectionHistory task={task} role={currentUser.role} />
                 </div>
               </div>
             </div>

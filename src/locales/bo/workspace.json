@@ -67,11 +67,19 @@
     "reject": {
       "choose": {
         "title": "Annotator དང་ལེན་མི་བྱེད།",
-        "description": "\"{{taskName}}\" ཞིབ་ཆེད Annotator གང་ལ་སླར་འབུལ་རྒྱུ་འདེམས།"
+        "description": "\"{{taskName}}\" བསྐྱར་ཞིབ་ཆེད་ཕྱིར་སློག་རྒྱུ་ཡིན།",
+        "targetPrompt": "ལས་ཀ་གང་གིས་བསྐྱར་བྱེད་དགོས།",
+        "commentLabel": "ཕྱིར་སློག་གི་བརྗད་དོན། (དགོས།)",
+        "commentPlaceholder": "གང་ཞིག་བཅོས་དགོས་པ་བཤད་རོགས…",
+        "confirm": "ཕྱིར་སློག་ངེས་པར་དུ་བྱེད།"
       },
       "chooseReviewers": {
         "title": "Reviewer དང་ལེན་མི་བྱེད།",
-        "description": "\"{{taskName}}\" ཞིབ་ཆེད Reviewer གང་ལ་སླར་འབུལ་རྒྱུ་འདེམས།"
+        "description": "\"{{taskName}}\" བསྐྱར་ཞིབ་ཆེད་ཕྱིར་སློག་རྒྱུ་ཡིན།",
+        "targetPrompt": "ལས་ཀ་གང་གིས་བསྐྱར་བྱེད་དགོས།",
+        "commentLabel": "ཕྱིར་སློག་གི་བརྗད་དོན། (དགོས།)",
+        "commentPlaceholder": "གང་ཞིག་བཅོས་དགོས་པ་བཤད་རོགས…",
+        "confirm": "ཕྱིར་སློག་ངེས་པར་དུ་བྱེད།"
       },
       "annotatorA": {
         "title": "Annotator A དང་ལེན་མི་བྱེད།",
@@ -115,6 +123,18 @@
       "priorReviewRejections": "སྔོན་གྱི་ཞིབ་བཤེར་ཕྱིར་སློག",
       "slotCount": "{{slot}}: {{count}}"
     }
+  },
+  "rejectionHistory": {
+    "trigger": "ཕྱིར་སློག་ལོ་རྒྱུས།",
+    "title": "ཕྱིར་སློག་ལོ་རྒྱུས།",
+    "description": "སྔོན་གྱི་ཕྱིར་སློག་བརྗད་དོན། གསར་ཤོས་སྔོན་ལ།",
+    "target": {
+      "annotatorA": "Annotator A",
+      "annotatorB": "Annotator B",
+      "reviewerA": "Reviewer A",
+      "reviewerB": "Reviewer B"
+    },
+    "resize": "ཕྱིར་སློག་ལོ་རྒྱུས་སྒེའུ་ཁུང་ཆེ་ཆུང་སྒྲིག"
   },
   "branding": {
     "appName": "ཡིག་འགྲིག་མིང་འགྲིག"

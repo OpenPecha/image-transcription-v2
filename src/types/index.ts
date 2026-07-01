@@ -29,6 +29,9 @@ export {
   isEditableTaskState,
   isAnnotatorATaskState,
   isAnnotatorBTaskState,
+  isReviewerATaskState,
+  isReviewerBTaskState,
+  isTaskAtOrPastFinalReview,
   canAnnotatorTrashTask,
   getAnnotatorBaselineTranscript,
 } from './task'
@@ -46,6 +49,10 @@ export type {
   TaskUploadItem,
   BulkCreateTasksRequest,
   BulkCreateTasksResponse,
+  RejectionCommentRecord,
+  RejectionHistoryTarget,
+  RejectionHistoryEntry,
+  TaskRejectionComments,
 } from './task'
 
 // Group types
