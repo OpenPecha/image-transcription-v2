@@ -44,12 +44,12 @@ export function useRejectReviewerFlow({
     [rejectTask.isPending]
   )
 
-  const selectRejectTarget = useCallback(
-    (target: RejectTarget) => {
+  const confirmReject = useCallback(
+    ({ reject_target, comment }: { reject_target: RejectTarget; comment: string }) => {
       if (!task || !userId || rejectTask.isPending) return
 
       rejectTask.mutate(
-        { task_id: task.task_id, user_id: userId, reject_target: target },
+        { task_id: task.task_id, user_id: userId, reject_target, comment },
         {
           onSuccess: () => {
             clearDrafts()
@@ -80,7 +80,7 @@ export function useRejectReviewerFlow({
       open,
       onOpenChange: handleOpenChange,
       onCancel: closeDialog,
-      onSelectTarget: selectRejectTarget,
+      onConfirm: confirmReject,
       isLoading: rejectTask.isPending,
       taskName: task?.task_name ?? '',
     },

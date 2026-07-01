@@ -150,6 +150,48 @@ export function getAnnotatorBaselineTranscript(task: AssignedTask): string {
   return task.task_transcript ?? ''
 }
 
+/** Single rejection comment record returned on assign (comment_A / comment_B arrays). */
+export interface RejectionCommentRecord {
+  comment: string
+  created: string
+}
+
+export type RejectionHistoryTarget =
+  | 'annotator_a'
+  | 'annotator_b'
+  | 'reviewer_a'
+  | 'reviewer_b'
+
+export interface RejectionHistoryEntry {
+  created: string
+  targets: RejectionHistoryTarget[]
+  comments: string[]
+}
+
+export interface TaskRejectionComments {
+  comment_A?: RejectionCommentRecord[]
+  comment_B?: RejectionCommentRecord[]
+}
+
+const FINAL_REVIEW_PIPELINE_STATES = [
+  'reviewed',
+  'finalising',
+  'finalised',
+] as const satisfies readonly AssignedTaskState[]
+
+export function isTaskAtOrPastFinalReview(state: AssignedTaskState): boolean {
+  return (FINAL_REVIEW_PIPELINE_STATES as readonly string[]).includes(state)
+}
+
+/** Reviewer A/B slot from assign state. */
+export function isReviewerATaskState(state: AssignedTaskState): boolean {
+  return state === 'reviewing'
+}
+
+export function isReviewerBTaskState(state: AssignedTaskState): boolean {
+  return state === 'reviewing_b'
+}
+
 // Assigned task from real backend API
 export interface AssignedTask {
   task_id: string
@@ -171,6 +213,8 @@ export interface AssignedTask {
   annotation_b_rejection_count?: number
   review_a_rejection_count?: number
   review_b_rejection_count?: number
+  comment_A?: RejectionCommentRecord[]
+  comment_B?: RejectionCommentRecord[]
 }
 
 // Task submission request

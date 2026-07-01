@@ -8,6 +8,7 @@ export interface RejectAnnotatorTaskParams {
   task_id: string
   user_id: string
   reject_target: RejectTarget
+  comment: string
 }
 
 interface RejectAnnotatorTaskResponse {
@@ -22,6 +23,7 @@ const rejectAnnotatorTask = async (
     user_id: params.user_id,
     submit: false,
     reject_target: params.reject_target,
+    comment: params.comment,
   })
 }
 

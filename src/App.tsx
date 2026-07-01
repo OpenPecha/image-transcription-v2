@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/common'
 import { Toaster } from '@/components/layout/toaster'
 import { router } from '@/routes'
 import { AuthProvider, useAuth, WrongAppDialog, NoGroupDialog } from '@/features/auth'
+import { isDevAuthEnabled } from '@/features/auth/dev-users'
 import { useLanguageSync } from '@/hooks'
 import { APPLICATION_NAME, APPLICATION_URLS } from '@/lib/constant'
 import { UserRole } from '@/types'
@@ -42,7 +43,11 @@ function AuthGuard() {
     return <WrongAppDialog url={wrongAppUrl} />
   }
 
-  const hasNoGroup = currentUser && currentUser.role !== UserRole.Admin && !currentUser.group_id
+  const hasNoGroup =
+    !isDevAuthEnabled() &&
+    currentUser &&
+    currentUser.role !== UserRole.Admin &&
+    !currentUser.group_id
 
   // Only show group dialog if the user has a role assigned (role error is handled by pending-approval page)
   if (currentUser?.role && hasNoGroup) {

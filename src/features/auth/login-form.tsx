@@ -1,6 +1,9 @@
+import { useState, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Loader2, LogIn, FileText, CheckCircle, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Card,
   CardContent,
@@ -8,7 +11,15 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { readStoredDevUserEmail } from './dev-users'
 import { useAuth } from './use-auth'
+
+const isDevAuth = import.meta.env.VITE_DEV_AUTH === 'true'
+
+function getInitialDevEmail(): string {
+  const params = new URLSearchParams(window.location.search)
+  return params.get('email')?.trim() ?? readStoredDevUserEmail() ?? ''
+}
 
 const featureKeys = [
   {
@@ -31,14 +42,29 @@ const featureKeys = [
 export function LoginForm() {
   const { t } = useTranslation('auth')
   const { login, isLoading } = useAuth()
+  const [devEmail, setDevEmail] = useState(getInitialDevEmail)
+
+  const trimmedDevEmail = devEmail.trim()
+  const canDevSignIn = trimmedDevEmail.length > 0 && !isLoading
 
   const handleLogin = () => {
+    if (isDevAuth) {
+      if (!canDevSignIn) return
+      login(trimmedDevEmail)
+      return
+    }
+
     login()
+  }
+
+  const handleDevEmailKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter' && canDevSignIn) {
+      handleLogin()
+    }
   }
 
   return (
     <div className="w-full max-w-md space-y-6">
-      {/* Branding Header */}
       <div className="text-center space-y-2">
         <div className="flex items-center justify-center gap-2">
           <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
@@ -53,19 +79,34 @@ export function LoginForm() {
         </p>
       </div>
 
-      {/* Login Card */}
       <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
         <CardHeader className="space-y-1 text-center pb-4">
           <CardTitle className="text-xl">{t('login.welcome')}</CardTitle>
           <CardDescription>
-            {t('login.signInPrompt')}
+            {isDevAuth ? t('login.devSignInPrompt') : t('login.signInPrompt')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {isDevAuth ? (
+            <div className="space-y-2">
+              <Label htmlFor="dev-email">{t('login.devEmailLabel')}</Label>
+              <Input
+                id="dev-email"
+                type="email"
+                autoComplete="email"
+                placeholder={t('login.devEmailPlaceholder')}
+                value={devEmail}
+                onChange={(event) => setDevEmail(event.target.value)}
+                onKeyDown={handleDevEmailKeyDown}
+                disabled={isLoading}
+              />
+            </div>
+          ) : null}
+
           <Button
             onClick={handleLogin}
             className="w-full h-11 text-base"
-            disabled={isLoading}
+            disabled={isDevAuth ? !canDevSignIn : isLoading}
           >
             {isLoading ? (
               <>
@@ -75,7 +116,7 @@ export function LoginForm() {
             ) : (
               <>
                 <LogIn className="mr-2 h-4 w-4" />
-                {t('login.signInWithAuth0')}
+                {isDevAuth ? t('login.devSignIn') : t('login.signInWithAuth0')}
               </>
             )}
           </Button>
@@ -91,7 +132,6 @@ export function LoginForm() {
             </div>
           </div>
 
-          {/* Feature List */}
           <div className="space-y-3">
             {featureKeys.map((feature) => (
               <div
@@ -111,9 +151,8 @@ export function LoginForm() {
         </CardContent>
       </Card>
 
-      {/* Footer */}
       <p className="text-center text-xs text-muted-foreground">
-        {t('login.secureAuth')}
+        {isDevAuth ? t('login.devAuthHint') : t('login.secureAuth')}
       </p>
     </div>
   )
