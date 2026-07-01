@@ -17,6 +17,7 @@ import {
   hasVisibleRejectionHistory,
   shouldShowRejectionTargetLabel,
 } from '@/lib/rejection-history'
+import { formatDateTimeLocal } from '@/lib/date-utils'
 import type { AssignedTask } from '@/types'
 import { cn } from '@/lib/utils'
 
@@ -30,7 +31,7 @@ interface RejectionHistoryProps {
 }
 
 export function RejectionHistory({ task, role }: RejectionHistoryProps) {
-  const { t } = useTranslation('workspace')
+  const { t, i18n } = useTranslation('workspace')
   const [open, setOpen] = useState(false)
   const [panelWidth, setPanelWidth] = useState(REJECTION_HISTORY_PANEL_DEFAULT_WIDTH)
   const [isResizing, setIsResizing] = useState(false)
@@ -127,7 +128,7 @@ export function RejectionHistory({ task, role }: RejectionHistoryProps) {
                       dateTime={entry.created}
                       className="block text-xs font-medium text-foreground"
                     >
-                      {entry.created}
+                      {formatDateTimeLocal(entry.created, i18n.language)}
                     </time>
                     {visibleTargets.length > 0 && (
                       <p className="text-xs font-semibold text-muted-foreground">

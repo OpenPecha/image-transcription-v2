@@ -50,19 +50,27 @@ function sortTargets(targets: RejectionHistoryTarget[]): RejectionHistoryTarget[
   )
 }
 
+function sortEntriesNewestFirst(entries: RejectionHistoryEntry[]): RejectionHistoryEntry[] {
+  return [...entries].sort(
+    (a, b) => new Date(b.created).getTime() - new Date(a.created).getTime()
+  )
+}
+
 function recordsToEntries(
   records: RejectionCommentRecord[] | undefined,
   target: RejectionHistoryTarget
 ): RejectionHistoryEntry[] {
   if (!records?.length) return []
 
-  return records
-    .filter((record) => record.comment.trim().length > 0)
-    .map((record) => ({
-      created: record.created,
-      targets: [target],
-      comments: [record.comment],
-    }))
+  return sortEntriesNewestFirst(
+    records
+      .filter((record) => record.comment.trim().length > 0)
+      .map((record) => ({
+        created: record.created,
+        targets: [target],
+        comments: [record.comment],
+      }))
+  )
 }
 
 /** Merge same-timestamp rejections (e.g. reject both) into one timeline row. */
@@ -95,12 +103,12 @@ function mergeTimeline(entries: RejectionHistoryEntry[]): RejectionHistoryEntry[
     }
   }
 
-  return Array.from(grouped.values())
-    .map((entry) => ({
+  return sortEntriesNewestFirst(
+    Array.from(grouped.values()).map((entry) => ({
       ...entry,
       targets: sortTargets(entry.targets),
     }))
-    .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
+  )
 }
 
 function slotEntries(
