@@ -13,10 +13,17 @@ const AdminUsersPage = lazy(() => import('@/pages/admin/admin-users-page').then(
 const AdminGroupsPage = lazy(() => import('@/pages/admin/admin-groups-page').then(m => ({ default: m.AdminGroupsPage })))
 const AdminBatchesPage = lazy(() => import('@/pages/admin/admin-batches-page').then(m => ({ default: m.AdminBatchesPage })))
 const AdminBatchTasksPage = lazy(() => import('@/pages/admin/admin-batch-tasks-page').then(m => ({ default: m.AdminBatchTasksPage })))
+const AdminUserContributionsPage = lazy(() => import('@/pages/admin/admin-user-contributions-page').then(m => ({ default: m.AdminUserContributionsPage })))
 const WorkspacePage = lazy(() => import('@/pages/workspace/workspace-page').then(m => ({ default: m.WorkspacePage })))
 const NotFoundPage = lazy(() => import('@/pages/not-found').then(m => ({ default: m.NotFoundPage })))
 
 const fallback = <></>
+
+const contributionsRouteElement = (
+  <ProtectedRoute allowedRoles={[UserRole.Admin]}>
+    <Suspense fallback={fallback}><AdminUserContributionsPage /></Suspense>
+  </ProtectedRoute>
+)
 
 export const router = createBrowserRouter([
   // Auth routes (public)
@@ -76,6 +83,14 @@ export const router = createBrowserRouter([
             <Suspense fallback={fallback}><AdminBatchesPage /></Suspense>
           </ProtectedRoute>
         ),
+      },
+      {
+        path: '/admin/user-contributions',
+        element: contributionsRouteElement,
+      },
+      {
+        path: '/admin/batches/user-contributions',
+        element: contributionsRouteElement,
       },
       {
         path: '/admin/batch/:batchId',

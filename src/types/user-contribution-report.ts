@@ -46,6 +46,7 @@ export interface Itv2RejectionsMadeMetrics {
 export interface Itv2AnnotatorContributionSummary extends Itv2ContributionRejectionMetrics {
   total_count: number
   tasks_annotated: number
+  tasks_reviewed: number
   tasks_final_reviewed: number
   final_char_count: number
   total_char_difference: number

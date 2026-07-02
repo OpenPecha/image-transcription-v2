@@ -17,6 +17,14 @@ export type {
   UserContributionReportResponse,
 } from './user-contribution-report'
 
+export type {
+  AnnotatorContributionRow,
+  ContributionSummaryQueryParams,
+  FinalReviewerContributionRow,
+  GroupContributionSummaryResponse,
+  ReviewerContributionRow,
+} from './contributions'
+
 // Task types
 export {
   TaskStatus,

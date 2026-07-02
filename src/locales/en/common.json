@@ -3,7 +3,8 @@
     "dashboard": "Dashboard",
     "users": "Users",
     "groups": "Groups",
-    "batches": "Batches"
+    "batches": "Batches",
+    "userContributions": "Contributions"
   },
   "actions": {
     "save": "Save",
