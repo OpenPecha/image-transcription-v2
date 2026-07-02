@@ -7,6 +7,7 @@ import {
   Users,
   Layers,
   Package,
+  BarChart3,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -51,6 +52,12 @@ const navItems: NavItem[] = [
     labelKey: 'nav.batches',
     href: '/admin/batches',
     icon: Package,
+    roles: [UserRole.Admin],
+  },
+  {
+    labelKey: 'nav.userContributions',
+    href: '/admin/user-contributions',
+    icon: BarChart3,
     roles: [UserRole.Admin],
   },
 ]
