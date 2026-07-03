@@ -7,6 +7,8 @@ import {
   forwardRef,
   useImperativeHandle,
   useMemo,
+  cloneElement,
+  isValidElement,
   type ReactNode,
   type RefObject,
 } from 'react'
@@ -35,7 +37,12 @@ import { parseTextSegmentSelection } from '../utils/text-selection'
 import { FONT_FAMILY_MAP } from './constant'
 import type { EditorFontFamily } from '@/store/use-ui-store'
 import { AnnotatorReadonlyPanel } from './annotator-readonly-panel'
+import type { EditorToolbarInjectedProps } from './editor-toolbar'
 import type { ReferenceTabsMode } from '../workspace-role-config'
+import {
+  buildAnnotatorSlotReferenceSegments,
+  computeReferenceHighlightStats,
+} from '../utils/reference-highlight-stats'
 
 export type DiffResolverHandle = {
   editSelection: () => boolean
@@ -51,6 +58,8 @@ interface DiffResolverProps {
   previewText: string
   referenceTranscript1: string
   referenceTranscript2: string
+  /** Comparison transcript with `<t-diff>` tags for reference-tab highlights. */
+  comparisonTranscript?: string
   fontFamily: EditorFontFamily
   fontSize: number
   /** True when the base transcript has no annotator `<t-diff>` tags. */
@@ -62,6 +71,8 @@ interface DiffResolverProps {
   menuBoundaryRef?: RefObject<HTMLElement | null>
   /** Read-only reference tabs: annotators (Reviewer A/B) or reviewers (Final Reviewer). */
   referenceTabs?: ReferenceTabsMode
+  /** Prior reviewer submission shown when reassigned after final-reviewer rejection. */
+  reviewerTranscript?: string
 }
 
 function ReadOnlyTranscriptPanel({
@@ -141,6 +152,7 @@ export const DiffResolver = forwardRef<DiffResolverHandle, DiffResolverProps>(fu
     previewText,
     referenceTranscript1,
     referenceTranscript2,
+    comparisonTranscript,
     fontFamily,
     fontSize,
     noAnnotatorDiffs = false,
@@ -148,6 +160,7 @@ export const DiffResolver = forwardRef<DiffResolverHandle, DiffResolverProps>(fu
     toolbar,
     menuBoundaryRef,
     referenceTabs = 'none',
+    reviewerTranscript = '',
   },
   ref
 ) {
@@ -157,6 +170,7 @@ export const DiffResolver = forwardRef<DiffResolverHandle, DiffResolverProps>(fu
   const pillRefs = useRef<Map<number, HTMLSpanElement>>(new Map())
   const customInputRefs = useRef<Map<number, HTMLTextAreaElement>>(new Map())
   const [openDiffId, setOpenDiffId] = useState<number | null>(null)
+  const [activeTab, setActiveTab] = useState('working')
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
 
   const diffSegments = segments.filter((seg): seg is DiffSegment => seg.type === 'diff')
@@ -426,6 +440,7 @@ export const DiffResolver = forwardRef<DiffResolverHandle, DiffResolverProps>(fu
 
   const resolvedFontFamily = FONT_FAMILY_MAP[fontFamily]
   const showReferenceTabs = referenceTabs !== 'none'
+  const showReviewerTranscriptTab = reviewerTranscript.trim().length > 0
   const referenceTabLabels =
     referenceTabs === 'reviewers'
       ? { tab1: t('diffResolver.reviewer1'), tab2: t('diffResolver.reviewer2') }
@@ -437,8 +452,40 @@ export const DiffResolver = forwardRef<DiffResolverHandle, DiffResolverProps>(fu
     return t('diffResolver.optionPreset', { label: getAnnotatorOptionLabel(index) })
   }
 
+  const referenceHighlightStats = useMemo(() => {
+    if (referenceTabs !== 'annotators') return null
+    if (activeTab !== 'reference1' && activeTab !== 'reference2') return null
+
+    const isPrimarySlot = activeTab === 'reference1'
+    const value = isPrimarySlot ? referenceTranscript1 : referenceTranscript2
+    const otherValue = isPrimarySlot ? referenceTranscript2 : referenceTranscript1
+    const segments = buildAnnotatorSlotReferenceSegments({
+      value,
+      otherValue,
+      isPrimarySlot,
+      comparisonTranscript,
+    })
+
+    return computeReferenceHighlightStats(segments)
+  }, [
+    activeTab,
+    referenceTabs,
+    referenceTranscript1,
+    referenceTranscript2,
+    comparisonTranscript,
+  ])
+
+  const toolbarWithStats =
+    toolbar && isValidElement<EditorToolbarInjectedProps>(toolbar)
+      ? cloneElement(toolbar, { referenceHighlightStats })
+      : toolbar
+
   return (
-    <Tabs defaultValue="working" className="flex-1 flex flex-col h-full overflow-hidden bg-card">
+    <Tabs
+      value={activeTab}
+      onValueChange={setActiveTab}
+      className="flex-1 flex flex-col h-full overflow-hidden bg-card"
+    >
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border bg-card/60 px-4 py-2">
         <TabsList className="h-auto flex-wrap bg-muted/80">
           <TabsTrigger value="working" className="text-xs">
@@ -456,6 +503,11 @@ export const DiffResolver = forwardRef<DiffResolverHandle, DiffResolverProps>(fu
                 {referenceTabLabels.tab2}
               </TabsTrigger>
             </>
+          )}
+          {showReviewerTranscriptTab && (
+            <TabsTrigger value="reviewerTranscript" className="text-xs">
+              {t('diffResolver.previousReview')}
+            </TabsTrigger>
           )}
         </TabsList>
 
@@ -485,7 +537,7 @@ export const DiffResolver = forwardRef<DiffResolverHandle, DiffResolverProps>(fu
         </div>
       </div>
 
-      {toolbar}
+      {toolbarWithStats}
 
       {noAnnotatorDiffs && (
         <div
@@ -767,6 +819,7 @@ export const DiffResolver = forwardRef<DiffResolverHandle, DiffResolverProps>(fu
               value={referenceTranscript1}
               otherValue={referenceTranscript2}
               isPrimarySlot
+              comparisonTranscript={comparisonTranscript}
               placeholder={t('diffResolver.referencePlaceholder')}
               fontFamily={resolvedFontFamily}
               fontSize={fontSize}
@@ -781,12 +834,29 @@ export const DiffResolver = forwardRef<DiffResolverHandle, DiffResolverProps>(fu
               value={referenceTranscript2}
               otherValue={referenceTranscript1}
               isPrimarySlot={false}
+              comparisonTranscript={comparisonTranscript}
               placeholder={t('diffResolver.referencePlaceholder')}
               fontFamily={resolvedFontFamily}
               fontSize={fontSize}
             />
           </TabsContent>
         </>
+      )}
+
+      {showReviewerTranscriptTab && (
+        <TabsContent
+          value="reviewerTranscript"
+          className="flex-1 flex flex-col min-h-0 m-0 border-none outline-none overflow-hidden"
+        >
+          <AnnotatorReadonlyPanel
+            value={reviewerTranscript}
+            comparisonTranscript={comparisonTranscript}
+            highlightMode="act-reviewer"
+            placeholder={t('diffResolver.referencePlaceholder')}
+            fontFamily={resolvedFontFamily}
+            fontSize={fontSize}
+          />
+        </TabsContent>
       )}
     </Tabs>
   )

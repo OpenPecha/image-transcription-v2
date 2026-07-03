@@ -225,6 +225,7 @@ export function WorkspaceEditor() {
     task?.task_id,
     task?.task_transcript,
     task?.initial_transcript,
+    task?.reviewer_transcript,
     task?.state,
     usesReviewerTranscript,
     roleCaps?.usesDiffResolver,
@@ -542,11 +543,13 @@ export function WorkspaceEditor() {
                 previewText={previewText}
                 referenceTranscript1={task.task_transcript_1 ?? ''}
                 referenceTranscript2={task.task_transcript_2 ?? ''}
+                comparisonTranscript={baseTranscript}
                 fontFamily={editorFontFamily}
                 fontSize={editorFontSize}
                 noAnnotatorDiffs={!hasAnnotatorDiffs}
                 isEmptyTranscript={!baseTranscript.trim()}
                 referenceTabs={roleCaps?.referenceTabs ?? 'none'}
+                reviewerTranscript={task.reviewer_transcript ?? ''}
                 menuBoundaryRef={textPanelRef}
                 toolbar={
                   <EditorToolbar
