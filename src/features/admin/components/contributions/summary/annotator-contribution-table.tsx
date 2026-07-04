@@ -1,6 +1,13 @@
 import { useTranslation } from 'react-i18next'
+import { cn } from '@/lib/utils'
 import type { AnnotatorContributionRow } from '@/types'
 import { AnnotatorContributionTableRow } from './annotator-contribution-row'
+import {
+  contributionTableClass,
+  contributionTableHeadCellClass,
+  contributionTableUsernameHeadCellClass,
+  contributionTableWrapperClass,
+} from './contribution-table-styles'
 
 export interface AnnotatorContributionTableProps {
   rows: AnnotatorContributionRow[]
@@ -24,38 +31,38 @@ export function AnnotatorContributionTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-border">
-      <table className="w-full min-w-[960px] text-sm">
+    <div className={contributionTableWrapperClass}>
+      <table className={cn(contributionTableClass, 'min-w-[960px]')}>
         <thead>
-          <tr className="border-b border-border bg-muted/50 text-left">
-            <th className="px-3 py-2 font-medium">
+          <tr className="text-left">
+            <th className={cn(contributionTableUsernameHeadCellClass, 'text-left')}>
               {t('userContributions.tables.annotator.username')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.annotator.tasksAnnotated')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.annotator.tasksReviewed')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.annotator.tasksFinalReviewed')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.annotator.rejectedCount')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.annotator.rejectedPercent')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.annotator.unrejectedPercent')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.annotator.finalCharCount')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.annotator.charDiff')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.annotator.charPercentDiff')}
             </th>
           </tr>

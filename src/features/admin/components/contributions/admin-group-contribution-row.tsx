@@ -99,7 +99,7 @@ export function AdminGroupContributionRow({
   )
 
   return (
-    <div className="rounded-lg border border-border bg-card">
+    <div className="min-w-0 rounded-lg border border-border bg-card">
       <button
         type="button"
         className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40"
@@ -113,7 +113,7 @@ export function AdminGroupContributionRow({
       </button>
 
       {isOpen ? (
-        <div className="space-y-4 border-t border-border px-4 py-4">
+        <div className="min-w-0 space-y-4 border-t border-border px-4 py-4">
           {showLoading ? (
             <div className="space-y-3">
               {dateFilterBlock}

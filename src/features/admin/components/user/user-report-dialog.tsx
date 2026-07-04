@@ -20,6 +20,7 @@ import {
   formatReportSignedNumber,
   getContributionSlotLabelKey,
   getContributionSummaryForRole,
+  getTaskRejectionsMadeCount,
 } from '@/lib/user-contribution-report'
 import { useGetUserContributions } from '../../api/user'
 import { UserReportSummary } from './user-report-summary'
@@ -230,6 +231,9 @@ function ContributionsTable({ tasks, role }: ContributionsTableProps) {
               {t('users.report.table.rejections')}
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
+              {t('users.report.summary.rejectionsMade')}
+            </th>
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('users.report.table.reviewChars')}
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
@@ -429,6 +433,9 @@ function ReviewerContributionRow({ task, role }: ContributionRowProps) {
         <RejectionCell count={task.rejection_count} />
       </td>
       <td className="px-4 py-2.5 text-right font-mono text-xs">
+        <RejectionCell count={getTaskRejectionsMadeCount(task)} />
+      </td>
+      <td className="px-4 py-2.5 text-right font-mono text-xs">
         {formatReportNumber(task.review_char_count)}
       </td>
       <td className="px-4 py-2.5 text-right font-mono text-xs">
@@ -517,7 +524,7 @@ function ContributionsTableSkeleton({ role }: { role: UserRole | undefined }) {
     role === UserRole.Annotator
       ? 8
       : role === UserRole.Reviewer
-        ? 13
+        ? 14
         : role === UserRole.FinalReviewer
           ? 10
           : 3

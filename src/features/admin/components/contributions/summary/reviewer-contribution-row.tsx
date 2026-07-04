@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { cn } from '@/lib/utils'
 import {
   formatReportCountSum,
   formatReportNumber,
@@ -12,6 +13,7 @@ import {
 } from '@/lib/user-contribution-report'
 import type { ReviewerContributionRow } from '@/types'
 import { ContributionMetricCell } from './contribution-metric-cell'
+import { contributionTableBodyCellClass, contributionTableUsernameBodyCellClass } from './contribution-table-styles'
 
 export interface ReviewerContributionRowProps {
   filterActive: boolean
@@ -25,6 +27,7 @@ export function ReviewerContributionTableRow({
   baseline,
 }: ReviewerContributionRowProps) {
   const totalReviewed = baseline.tasks_reviewed ?? baseline.total_count ?? 0
+  const totalReviewedAsR1 = baseline.tasks_reviewed_as_r1 ?? 0
   const totalFinalReviewed = baseline.tasks_final_reviewed ?? 0
 
   const reviewedCell: ReactNode = filterActive ? (
@@ -35,6 +38,16 @@ export function ReviewerContributionTableRow({
     />
   ) : (
     <span className="tabular-nums">{totalReviewed}</span>
+  )
+
+  const reviewedAsR1Cell: ReactNode = filterActive ? (
+    <ContributionMetricCell
+      count={display.tasks_reviewed_as_r1 ?? 0}
+      denominator={totalReviewedAsR1}
+      filterActive
+    />
+  ) : (
+    <span className="tabular-nums">{totalReviewedAsR1}</span>
   )
 
   const finalReviewedCell: ReactNode = filterActive ? (
@@ -50,45 +63,48 @@ export function ReviewerContributionTableRow({
   const row = filterActive ? display : baseline
 
   return (
-    <tr className="border-b border-border last:border-0">
-      <td className="px-3 py-2">{display.username}</td>
-      <td className="px-3 py-2 text-right">{reviewedCell}</td>
-      <td className="px-3 py-2 text-right">{finalReviewedCell}</td>
-      <td className="px-3 py-2 text-right tabular-nums">{getSummaryRejectedCount(row)}</td>
-      <td className="px-3 py-2 text-right tabular-nums">
+    <tr>
+      <td className={contributionTableUsernameBodyCellClass} title={display.username}>
+        {display.username}
+      </td>
+      <td className={cn(contributionTableBodyCellClass, 'text-right')}>{reviewedCell}</td>
+      <td className={cn(contributionTableBodyCellClass, 'text-right')}>{reviewedAsR1Cell}</td>
+      <td className={cn(contributionTableBodyCellClass, 'text-right')}>{finalReviewedCell}</td>
+      <td className={cn(contributionTableBodyCellClass, 'text-right tabular-nums')}>{getSummaryRejectedCount(row)}</td>
+      <td className={cn(contributionTableBodyCellClass, 'text-right tabular-nums')}>
         {formatReportPercent(getSummaryRejectedPercent(row))}
       </td>
-      <td className="px-3 py-2 text-right tabular-nums">
+      <td className={cn(contributionTableBodyCellClass, 'text-right tabular-nums')}>
         {formatReportPercent(getSummaryUnrejectedTasksPercent(row))}
       </td>
-      <td className="px-3 py-2 text-right tabular-nums">
+      <td className={cn(contributionTableBodyCellClass, 'text-right tabular-nums')}>
         {formatReportNumber(row.review_char_count)}
       </td>
-      <td className="px-3 py-2 text-right tabular-nums">
+      <td className={cn(contributionTableBodyCellClass, 'text-right tabular-nums')}>
         {formatReportSignedNumber(row.review_total_char_difference)}
       </td>
-      <td className="px-3 py-2 text-right tabular-nums">
+      <td className={cn(contributionTableBodyCellClass, 'text-right tabular-nums')}>
         {formatReportNumber(row.final_char_count)}
       </td>
-      <td className="px-3 py-2 text-right tabular-nums">
+      <td className={cn(contributionTableBodyCellClass, 'text-right tabular-nums')}>
         {formatReportSignedNumber(row.total_char_difference)}
       </td>
-      <td className="px-3 py-2 text-right tabular-nums">
+      <td className={cn(contributionTableBodyCellClass, 'text-right tabular-nums')}>
         {formatReportPercent(row.char_percent_diff)}
       </td>
-      <td className="px-3 py-2 text-right tabular-nums">
+      <td className={cn(contributionTableBodyCellClass, 'text-right tabular-nums')}>
         {getSummaryRejectionsMadeCount(row)}
       </td>
-      <td className="px-3 py-2 text-right tabular-nums">
+      <td className={cn(contributionTableBodyCellClass, 'text-right tabular-nums')}>
         {formatReportPercent(getSummaryRejectionsMadePercent(row))}
       </td>
-      <td className="px-3 py-2 text-right tabular-nums">
+      <td className={cn(contributionTableBodyCellClass, 'text-right tabular-nums')}>
         {formatReportCountSum(row.own_version_count, row.own_version_sum)}
       </td>
-      <td className="px-3 py-2 text-right tabular-nums">
+      <td className={cn(contributionTableBodyCellClass, 'text-right tabular-nums')}>
         {formatReportCountSum(row.selected_option_count, row.selected_option_sum)}
       </td>
-      <td className="px-3 py-2 text-right tabular-nums">
+      <td className={cn(contributionTableBodyCellClass, 'text-right tabular-nums')}>
         {formatReportCountSum(row.modified_option_count, row.modified_option_sum)}
       </td>
     </tr>

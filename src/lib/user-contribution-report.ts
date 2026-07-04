@@ -59,7 +59,14 @@ export function getSummaryRejectionsMadePercent(
   summary: (Itv2RejectionsMadeMetrics & Itv2ContributionRejectionMetrics) | null | undefined
 ): number | undefined {
   if (!summary) return undefined
-  return summary.rejections_made_percent ?? summary.rejection_percent
+  return summary.rejections_made_percent
+}
+
+export function getTaskRejectionsMadeCount(
+  task: { rejections_made_count?: number | null; rejections_made?: number | null } | null | undefined
+): number {
+  if (!task) return 0
+  return task.rejections_made_count ?? task.rejections_made ?? 0
 }
 
 export function emptyContributionReport(): UserContributionReportResponse {

@@ -1,6 +1,13 @@
 import { useTranslation } from 'react-i18next'
+import { cn } from '@/lib/utils'
 import type { ReviewerContributionRow } from '@/types'
 import { ReviewerContributionTableRow } from './reviewer-contribution-row'
+import {
+  contributionTableClass,
+  contributionTableHeadCellClass,
+  contributionTableUsernameHeadCellClass,
+  contributionTableWrapperClass,
+} from './contribution-table-styles'
 
 export interface ReviewerContributionTableProps {
   rows: ReviewerContributionRow[]
@@ -24,56 +31,59 @@ export function ReviewerContributionTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-border">
-      <table className="w-full min-w-[1200px] text-sm">
+    <div className={contributionTableWrapperClass}>
+      <table className={cn(contributionTableClass, 'min-w-[1280px]')}>
         <thead>
-          <tr className="border-b border-border bg-muted/50 text-left">
-            <th className="px-3 py-2 font-medium">
+          <tr className="text-left">
+            <th className={cn(contributionTableUsernameHeadCellClass, 'text-left')}>
               {t('userContributions.tables.reviewer.username')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.reviewer.tasksReviewed')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
+              {t('userContributions.tables.reviewer.tasksReviewedAsR1')}
+            </th>
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.reviewer.tasksFinalReviewed')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.reviewer.rejectedCount')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.reviewer.rejectedPercent')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.reviewer.unrejectedPercent')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.reviewer.reviewCharCount')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.reviewer.reviewCharDiff')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.reviewer.finalCharCount')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.reviewer.charDiff')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.reviewer.charPercentDiff')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.reviewer.rejectionsMade')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.reviewer.rejectionsMadePercent')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.reviewer.ownVersion')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.reviewer.selectedOption')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.reviewer.modifiedOption')}
             </th>
           </tr>

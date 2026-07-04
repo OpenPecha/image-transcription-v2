@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { cn } from '@/lib/utils'
 import {
   formatReportNumber,
   formatReportPercent,
@@ -9,6 +10,7 @@ import {
 } from '@/lib/user-contribution-report'
 import type { AnnotatorContributionRow } from '@/types'
 import { ContributionMetricCell } from './contribution-metric-cell'
+import { contributionTableBodyCellClass, contributionTableUsernameBodyCellClass } from './contribution-table-styles'
 
 export interface AnnotatorContributionRowProps {
   filterActive: boolean
@@ -58,25 +60,27 @@ export function AnnotatorContributionTableRow({
   const row = filterActive ? display : baseline
 
   return (
-    <tr className="border-b border-border last:border-0">
-      <td className="px-3 py-2">{display.username}</td>
-      <td className="px-3 py-2 text-right">{annotatedCell}</td>
-      <td className="px-3 py-2 text-right">{reviewedCell}</td>
-      <td className="px-3 py-2 text-right">{finalReviewedCell}</td>
-      <td className="px-3 py-2 text-right tabular-nums">{getSummaryRejectedCount(row)}</td>
-      <td className="px-3 py-2 text-right tabular-nums">
+    <tr>
+      <td className={contributionTableUsernameBodyCellClass} title={display.username}>
+        {display.username}
+      </td>
+      <td className={cn(contributionTableBodyCellClass, 'text-right')}>{annotatedCell}</td>
+      <td className={cn(contributionTableBodyCellClass, 'text-right')}>{reviewedCell}</td>
+      <td className={cn(contributionTableBodyCellClass, 'text-right')}>{finalReviewedCell}</td>
+      <td className={cn(contributionTableBodyCellClass, 'text-right tabular-nums')}>{getSummaryRejectedCount(row)}</td>
+      <td className={cn(contributionTableBodyCellClass, 'text-right tabular-nums')}>
         {formatReportPercent(getSummaryRejectedPercent(row))}
       </td>
-      <td className="px-3 py-2 text-right tabular-nums">
+      <td className={cn(contributionTableBodyCellClass, 'text-right tabular-nums')}>
         {formatReportPercent(getSummaryUnrejectedTasksPercent(row))}
       </td>
-      <td className="px-3 py-2 text-right tabular-nums">
+      <td className={cn(contributionTableBodyCellClass, 'text-right tabular-nums')}>
         {formatReportNumber(row.final_char_count)}
       </td>
-      <td className="px-3 py-2 text-right tabular-nums">
+      <td className={cn(contributionTableBodyCellClass, 'text-right tabular-nums')}>
         {formatReportSignedNumber(row.total_char_difference)}
       </td>
-      <td className="px-3 py-2 text-right tabular-nums">
+      <td className={cn(contributionTableBodyCellClass, 'text-right tabular-nums')}>
         {formatReportPercent(row.char_percent_diff)}
       </td>
     </tr>
