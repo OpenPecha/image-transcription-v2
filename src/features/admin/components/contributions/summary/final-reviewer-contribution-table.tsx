@@ -1,6 +1,13 @@
 import { useTranslation } from 'react-i18next'
+import { cn } from '@/lib/utils'
 import type { FinalReviewerContributionRow } from '@/types'
 import { FinalReviewerContributionTableRow } from './final-reviewer-contribution-row'
+import {
+  contributionTableClass,
+  contributionTableHeadCellClass,
+  contributionTableUsernameHeadCellClass,
+  contributionTableWrapperClass,
+} from './contribution-table-styles'
 
 export interface FinalReviewerContributionTableProps {
   rows: FinalReviewerContributionRow[]
@@ -24,41 +31,41 @@ export function FinalReviewerContributionTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-border">
-      <table className="w-full min-w-[960px] text-sm">
+    <div className={contributionTableWrapperClass}>
+      <table className={cn(contributionTableClass, 'min-w-[960px]')}>
         <thead>
-          <tr className="border-b border-border bg-muted/50 text-left">
-            <th className="px-3 py-2 font-medium">
+          <tr className="text-left">
+            <th className={cn(contributionTableUsernameHeadCellClass, 'text-left')}>
               {t('userContributions.tables.finalReviewer.username')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.finalReviewer.tasksFinalised')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.finalReviewer.rejectionsMade')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.finalReviewer.rejectionsMadePercent')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.finalReviewer.unrejectedPercent')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.finalReviewer.finalCharCount')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.finalReviewer.charDiff')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.finalReviewer.charPercentDiff')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.finalReviewer.ownVersion')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.finalReviewer.selectedOption')}
             </th>
-            <th className="px-3 py-2 text-right font-medium">
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.finalReviewer.modifiedOption')}
             </th>
           </tr>

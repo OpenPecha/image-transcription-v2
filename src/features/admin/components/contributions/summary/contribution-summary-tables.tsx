@@ -33,8 +33,8 @@ export function ContributionSummaryTables({
     filterActive && filtered ? filtered.final_reviewer : baseline.final_reviewer
 
   return (
-    <div className="space-y-6">
-      <section className="space-y-2">
+    <div className="min-w-0 space-y-6">
+      <section className="min-w-0 space-y-2">
         <h3 className="text-sm font-semibold">{t('userContributions.annotatorsSection')}</h3>
         <AnnotatorContributionTable
           rows={annotRows}
@@ -43,7 +43,7 @@ export function ContributionSummaryTables({
         />
       </section>
 
-      <section className="space-y-2">
+      <section className="min-w-0 space-y-2">
         <h3 className="text-sm font-semibold">{t('userContributions.reviewersSection')}</h3>
         <ReviewerContributionTable
           rows={revRows}
@@ -52,7 +52,7 @@ export function ContributionSummaryTables({
         />
       </section>
 
-      <section className="space-y-2">
+      <section className="min-w-0 space-y-2">
         <h3 className="text-sm font-semibold">{t('userContributions.finalReviewersSection')}</h3>
         <FinalReviewerContributionTable
           rows={finalRevRows}

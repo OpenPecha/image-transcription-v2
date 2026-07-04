@@ -16,7 +16,7 @@ export function UserContributionsPage() {
   const { t } = useTranslation('admin')
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">{t('userContributions.title')}</h1>
         <p className="text-muted-foreground">{t('userContributions.description')}</p>
@@ -95,7 +95,7 @@ function AdminContributionsBody() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="min-w-0 space-y-3">
       <p className="text-sm text-muted-foreground">{t('userContributions.adminExpandHint')}</p>
       {groups.map((group) => (
         <AdminGroupContributionRow

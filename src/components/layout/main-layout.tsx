@@ -11,11 +11,11 @@ export function MainLayout() {
       <Sidebar />
       <main
         className={cn(
-          'min-h-screen transition-all duration-300',
+          'min-h-screen min-w-0 transition-all duration-300',
           sidebarCollapsed ? 'ml-16' : 'ml-60'
         )}
       >
-        <div className="container mx-auto p-6">
+        <div className="container mx-auto min-w-0 p-6">
           <Outlet />
         </div>
       </main>
