@@ -23,6 +23,7 @@
         "tasksCompleted": "ལས་ཀ་བསྒྲུབས།",
         "tasksFinalReviewed": "མཇུག་དམ་ཞིབ་བཤེར་བསྒྲུབས།",
         "tasksReviewed": "ཞིབ་བཤེར་བསྒྲུབས།",
+        "tasksReviewedAsR1": "ཞིབ་བཤེར་པ་A",
         "tasksFinalised": "མཇུག་བསྒྲིལ་བསྒྲུབས།",
         "rejectionCount": "ཕྱིར་སློག",
         "rejectionsMade": "ཕྱིར་སློག་བྱས་པ།",
@@ -111,6 +112,7 @@
       "reviewer": {
         "username": "མིང་།",
         "tasksReviewed": "ཞིབ་བཤེར་བསྒྲུབས།",
+        "tasksReviewedAsR1": "ཞིབ་བཤེར་པ་A",
         "tasksFinalReviewed": "མཇུག་དམ་ཞིབ་བཤེར་བསྒྲུབས།",
         "rejectedCount": "ཕྱིར་སློག",
         "rejectedPercent": "ཕྱིར་སློག་ཚད།",

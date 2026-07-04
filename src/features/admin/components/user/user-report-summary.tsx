@@ -126,6 +126,11 @@ export function UserReportSummary({ role, summary, isLoading }: UserReportSummar
           bg: STAT_CARD_BG.emerald,
         },
         {
+          value: summary.tasks_reviewed_as_r1 ?? 0,
+          label: t('users.report.summary.tasksReviewedAsR1'),
+          bg: STAT_CARD_BG.emerald,
+        },
+        {
           value: summary.tasks_final_reviewed ?? 0,
           label: t('users.report.summary.tasksFinalReviewed'),
           bg: STAT_CARD_BG.sky,

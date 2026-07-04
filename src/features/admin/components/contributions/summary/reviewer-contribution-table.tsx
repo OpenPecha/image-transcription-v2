@@ -32,7 +32,7 @@ export function ReviewerContributionTable({
 
   return (
     <div className={contributionTableWrapperClass}>
-      <table className={cn(contributionTableClass, 'min-w-[1200px]')}>
+      <table className={cn(contributionTableClass, 'min-w-[1280px]')}>
         <thead>
           <tr className="text-left">
             <th className={cn(contributionTableUsernameHeadCellClass, 'text-left')}>
@@ -40,6 +40,9 @@ export function ReviewerContributionTable({
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.reviewer.tasksReviewed')}
+            </th>
+            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
+              {t('userContributions.tables.reviewer.tasksReviewedAsR1')}
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
               {t('userContributions.tables.reviewer.tasksFinalReviewed')}

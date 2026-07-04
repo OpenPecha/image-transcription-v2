@@ -12,7 +12,9 @@ export interface Itv2ContributionTask {
   char_percent_diff: number | null
   review_char_count?: number | null
   review_total_char_difference?: number | null
+  /** @deprecated Use `rejections_made_count` */
   rejections_made?: number | null
+  rejections_made_count?: number | null
   own_version_count?: number | null
   own_version_sum?: number | null
   selected_option_count?: number | null
@@ -57,6 +59,8 @@ export interface Itv2ReviewerContributionSummary
   extends Itv2ContributionRejectionMetrics, Itv2RejectionsMadeMetrics {
   total_count?: number
   tasks_reviewed?: number
+  /** Tasks reviewed in Reviewer A (order 1) slot. */
+  tasks_reviewed_as_r1?: number
   tasks_final_reviewed?: number
   final_char_count?: number
   total_char_difference?: number

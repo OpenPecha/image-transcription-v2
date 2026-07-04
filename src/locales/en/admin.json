@@ -23,6 +23,7 @@
         "tasksCompleted": "Tasks Completed",
         "tasksFinalReviewed": "Task Final Reviewed",
         "tasksReviewed": "Tasks Reviewed",
+        "tasksReviewedAsR1": "Tasks Reviewed as R1",
         "tasksFinalised": "Tasks Finalised",
         "rejectionCount": "Rejections",
         "rejectionsMade": "Rejections Made",
@@ -111,6 +112,7 @@
       "reviewer": {
         "username": "Username",
         "tasksReviewed": "Tasks reviewed",
+        "tasksReviewedAsR1": "Reviewed as R1",
         "tasksFinalReviewed": "Task final reviewed",
         "rejectedCount": "Rejections",
         "rejectedPercent": "Rejected %",

@@ -27,6 +27,7 @@ export function ReviewerContributionTableRow({
   baseline,
 }: ReviewerContributionRowProps) {
   const totalReviewed = baseline.tasks_reviewed ?? baseline.total_count ?? 0
+  const totalReviewedAsR1 = baseline.tasks_reviewed_as_r1 ?? 0
   const totalFinalReviewed = baseline.tasks_final_reviewed ?? 0
 
   const reviewedCell: ReactNode = filterActive ? (
@@ -37,6 +38,16 @@ export function ReviewerContributionTableRow({
     />
   ) : (
     <span className="tabular-nums">{totalReviewed}</span>
+  )
+
+  const reviewedAsR1Cell: ReactNode = filterActive ? (
+    <ContributionMetricCell
+      count={display.tasks_reviewed_as_r1 ?? 0}
+      denominator={totalReviewedAsR1}
+      filterActive
+    />
+  ) : (
+    <span className="tabular-nums">{totalReviewedAsR1}</span>
   )
 
   const finalReviewedCell: ReactNode = filterActive ? (
@@ -57,6 +68,7 @@ export function ReviewerContributionTableRow({
         {display.username}
       </td>
       <td className={cn(contributionTableBodyCellClass, 'text-right')}>{reviewedCell}</td>
+      <td className={cn(contributionTableBodyCellClass, 'text-right')}>{reviewedAsR1Cell}</td>
       <td className={cn(contributionTableBodyCellClass, 'text-right')}>{finalReviewedCell}</td>
       <td className={cn(contributionTableBodyCellClass, 'text-right tabular-nums')}>{getSummaryRejectedCount(row)}</td>
       <td className={cn(contributionTableBodyCellClass, 'text-right tabular-nums')}>
