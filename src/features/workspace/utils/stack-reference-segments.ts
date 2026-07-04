@@ -1,40 +1,62 @@
 import { diff_match_patch, DIFF_DELETE, DIFF_EQUAL, DIFF_INSERT } from 'diff-match-patch'
-import { tokenizeInStacks } from './tokenize-tibetan-stacks'
+import { tokenizeForStackDiff } from './tokenize-tibetan-stacks'
 
 export type ReferenceSegment =
   | { type: 'default'; text: string }
   | { type: 'highlight'; text: string }
 
 function encodeTokenPair(
-  tokensLeft: string[],
-  tokensRight: string[]
-): { left: string; right: string; vocab: string[] } {
-  const vocab: string[] = ['']
-  const indexByToken = new Map<string, number>()
+  normLeft: string[],
+  normRight: string[],
+  displayLeft: string[],
+  displayRight: string[]
+): {
+  left: string
+  right: string
+  displayLeftByCode: string[]
+  displayRightByCode: string[]
+} {
+  const indexByNorm = new Map<string, number>()
+  const displayLeftByCode: string[] = ['']
+  const displayRightByCode: string[] = ['']
 
-  function codeFor(token: string): number {
-    let code = indexByToken.get(token)
+  function codeFor(norm: string, display: string, side: 'left' | 'right'): number {
+    let code = indexByNorm.get(norm)
     if (code === undefined) {
-      code = vocab.length
+      code = displayLeftByCode.length
       if (code > 0xffff) {
         throw new Error('Too many unique stack tokens to diff')
       }
-      indexByToken.set(token, code)
-      vocab.push(token)
+      indexByNorm.set(norm, code)
+      displayLeftByCode.push('')
+      displayRightByCode.push('')
+    }
+    if (side === 'left') {
+      displayLeftByCode[code] = display
+    } else {
+      displayRightByCode[code] = display
     }
     return code
   }
 
-  const left = tokensLeft.map((token) => String.fromCharCode(codeFor(token))).join('')
-  const right = tokensRight.map((token) => String.fromCharCode(codeFor(token))).join('')
+  const left = normLeft
+    .map((norm, index) =>
+      String.fromCharCode(codeFor(norm, displayLeft[index] ?? norm, 'left'))
+    )
+    .join('')
+  const right = normRight
+    .map((norm, index) =>
+      String.fromCharCode(codeFor(norm, displayRight[index] ?? norm, 'right'))
+    )
+    .join('')
 
-  return { left, right, vocab }
+  return { left, right, displayLeftByCode, displayRightByCode }
 }
 
-function decodeTokens(encoded: string, vocab: string[]): string {
+function decodeTokens(encoded: string, displayByCode: string[]): string {
   let text = ''
   for (let i = 0; i < encoded.length; i++) {
-    text += vocab[encoded.charCodeAt(i)] ?? ''
+    text += displayByCode[encoded.charCodeAt(i)] ?? ''
   }
   return text
 }
@@ -77,10 +99,11 @@ export function findStackAnchorPosition(
 ): number {
   if (!anchorText) return text.length
 
-  const anchorTokens = tokenizeInStacks(anchorText)
+  const { normTokens: anchorTokens } = tokenizeForStackDiff(anchorText)
   if (anchorTokens.length === 0) return startPos
 
-  const haystackTokens = tokenizeInStacks(text.slice(startPos))
+  const { normTokens: haystackTokens, displayTokens: haystackDisplayTokens } =
+    tokenizeForStackDiff(text.slice(startPos))
   for (let i = 0; i <= haystackTokens.length - anchorTokens.length; i++) {
     let matches = true
     for (let j = 0; j < anchorTokens.length; j++) {
@@ -90,7 +113,7 @@ export function findStackAnchorPosition(
       }
     }
     if (matches) {
-      return charOffsetForTokenIndex(haystackTokens, i, startPos)
+      return charOffsetForTokenIndex(haystackDisplayTokens, i, startPos)
     }
   }
 
@@ -111,9 +134,14 @@ export function diffReviewerPrimaryUntilExpectedConsumed(
   }
 
   const reviewerSuffix = reviewer.slice(startPos)
-  const tokensReviewer = tokenizeInStacks(reviewerSuffix)
-  const tokensExpected = tokenizeInStacks(expected)
-  const { left, right, vocab } = encodeTokenPair(tokensReviewer, tokensExpected)
+  const reviewerTokens = tokenizeForStackDiff(reviewerSuffix)
+  const expectedTokens = tokenizeForStackDiff(expected)
+  const { left, right, displayLeftByCode } = encodeTokenPair(
+    reviewerTokens.normTokens,
+    expectedTokens.normTokens,
+    reviewerTokens.displayTokens,
+    expectedTokens.displayTokens
+  )
   const dmp = new diff_match_patch()
   const diffs = dmp.diff_main(left, right, false)
   dmp.diff_cleanupSemantic(diffs)
@@ -121,24 +149,23 @@ export function diffReviewerPrimaryUntilExpectedConsumed(
   const segments: ReferenceSegment[] = []
   let reviewerTokensConsumed = 0
   let expectedTokensConsumed = 0
-  const totalExpected = tokensExpected.length
+  const totalExpected = expectedTokens.normTokens.length
 
   for (const [op, encoded] of diffs) {
     if (expectedTokensConsumed >= totalExpected) break
     if (!encoded) continue
 
     const tokenCount = encoded.length
-    const chunkText = decodeTokens(encoded, vocab)
 
     if (op === DIFF_EQUAL) {
-      pushSegment(segments, 'default', chunkText)
+      pushSegment(segments, 'default', decodeTokens(encoded, displayLeftByCode))
       reviewerTokensConsumed += tokenCount
       expectedTokensConsumed += tokenCount
       continue
     }
 
     if (op === DIFF_DELETE) {
-      pushSegment(segments, 'highlight', chunkText)
+      pushSegment(segments, 'highlight', decodeTokens(encoded, displayLeftByCode))
       reviewerTokensConsumed += tokenCount
       continue
     }
@@ -150,7 +177,11 @@ export function diffReviewerPrimaryUntilExpectedConsumed(
 
   return {
     segments,
-    endPos: charOffsetForTokenIndex(tokensReviewer, reviewerTokensConsumed, startPos),
+    endPos: charOffsetForTokenIndex(
+      reviewerTokens.displayTokens,
+      reviewerTokensConsumed,
+      startPos
+    ),
   }
 }
 
@@ -164,23 +195,29 @@ export function buildStackReferenceSegments(
   otherValue: string,
   isPrimarySlot: boolean
 ): ReferenceSegment[] {
-  const tokensValue = tokenizeInStacks(value)
-  const tokensOther = tokenizeInStacks(otherValue)
-  const [tokensLeft, tokensRight] = isPrimarySlot
-    ? [tokensValue, tokensOther]
-    : [tokensOther, tokensValue]
+  const valueTokens = tokenizeForStackDiff(value)
+  const otherTokens = tokenizeForStackDiff(otherValue)
+  const [leftTokens, rightTokens] = isPrimarySlot
+    ? [valueTokens, otherTokens]
+    : [otherTokens, valueTokens]
 
-  const { left, right, vocab } = encodeTokenPair(tokensLeft, tokensRight)
+  const { left, right, displayLeftByCode, displayRightByCode } = encodeTokenPair(
+    leftTokens.normTokens,
+    rightTokens.normTokens,
+    leftTokens.displayTokens,
+    rightTokens.displayTokens
+  )
   const dmp = new diff_match_patch()
   const diffs = dmp.diff_main(left, right, false)
   dmp.diff_cleanupSemantic(diffs)
 
   const segments: ReferenceSegment[] = []
+  const displayByCode = isPrimarySlot ? displayLeftByCode : displayRightByCode
 
   for (const [op, encoded] of diffs) {
     if (!encoded) continue
 
-    const text = decodeTokens(encoded, vocab)
+    const text = decodeTokens(encoded, displayByCode)
 
     if (op === DIFF_EQUAL) {
       pushSegment(segments, 'default', text)
