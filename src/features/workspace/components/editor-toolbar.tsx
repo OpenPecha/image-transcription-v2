@@ -18,6 +18,13 @@ import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 import { useUIStore, type EditorFontFamily, type EditorFontSize } from '@/store/use-ui-store'
 import { FONT_FAMILIES, FONT_SIZES } from './constant'
+import type { ReferenceHighlightStats } from '../utils/reference-highlight-stats'
+
+export type EditorToolbarInjectedProps = {
+  referenceHighlightStats?: ReferenceHighlightStats | null
+}
+
+export type { ReferenceHighlightStats }
 
 type EditorToolbarProps = {
   onRestoreOriginal: () => void
@@ -29,6 +36,7 @@ type EditorToolbarProps = {
   showDiff?: boolean
   onToggleDiff?: () => void
   canShowDiff?: boolean
+  referenceHighlightStats?: ReferenceHighlightStats | null
 }
 
 function ShortcutHint({ keys, label }: { keys: string; label: string }) {
@@ -52,6 +60,7 @@ export function EditorToolbar({
   showDiff = false,
   onToggleDiff,
   canShowDiff = false,
+  referenceHighlightStats = null,
 }: EditorToolbarProps) {
   const { t } = useTranslation('workspace')
   const { editorFontFamily, editorFontSize, setEditorFontFamily, setEditorFontSize } = useUIStore()
@@ -127,6 +136,24 @@ export function EditorToolbar({
           </SelectContent>
         </Select>
       </div>
+
+      {referenceHighlightStats && (
+        <>
+          <Separator orientation="vertical" className="h-5" />
+          <div className="flex items-center gap-3 text-xs text-muted-foreground tabular-nums">
+            <span>
+              {t('diffResolver.referenceCharacterLength', {
+                count: referenceHighlightStats.characterLength,
+              })}
+            </span>
+            <span>
+              {t('diffResolver.referenceDiffPercent', {
+                percent: referenceHighlightStats.diffPercent,
+              })}
+            </span>
+          </div>
+        </>
+      )}
 
       <div className="flex-1" />
 

@@ -79,8 +79,8 @@ export function BatchTaskSearch() {
 
   return (
     <>
-      <div ref={containerRef} className="relative w-full sm:w-md">
-        <div className="flex gap-2">
+      <div ref={containerRef} className="relative w-full sm:max-w-md">
+        <div className="flex items-center gap-2">
           <div className="relative min-w-0 flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -88,7 +88,7 @@ export function BatchTaskSearch() {
               onChange={(event) => setQuery(event.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={t('batches.searchTasks')}
-              className="pl-9"
+              className="h-9 pl-9"
               aria-label={t('batches.searchTasks')}
               aria-expanded={showDropdown}
               aria-haspopup="listbox"

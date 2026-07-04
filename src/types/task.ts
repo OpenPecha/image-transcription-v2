@@ -202,6 +202,8 @@ export interface AssignedTask {
   task_transcript_1?: string
   /** Slot 2 reference transcript — Annotator B (reviewers) or Reviewer B (final reviewer). */
   task_transcript_2?: string
+  /** Reviewer's prior submission when reassigned after final-reviewer rejection. */
+  reviewer_transcript?: string
   initial_transcript?: string
   state: AssignedTaskState
   batch_name: string
