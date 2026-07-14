@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
+import { ContributionHintLabel } from '@/features/admin/components/contributions/summary/contribution-hint-label'
 import {
   formatReportCountSum,
   formatReportNumber,
@@ -20,7 +21,7 @@ import {
   formatReportSignedNumber,
   getContributionSlotLabelKey,
   getContributionSummaryForRole,
-  getTaskRejectionsMadeCount,
+  getTaskRejectionsMadeValue,
 } from '@/lib/user-contribution-report'
 import { useGetUserContributions } from '../../api/user'
 import { UserReportSummary } from './user-report-summary'
@@ -179,28 +180,44 @@ function ContributionsTable({ tasks, role }: ContributionsTableProps) {
         <thead>
           <tr>
             <th className={cn(contributionTableHeadCellClass, 'text-left')}>
-              {t('users.report.table.imageName')}
+              <ContributionHintLabel hint={t('users.report.hints.imageName')}>
+                {t('users.report.table.imageName')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-left')}>
-              {t('users.report.table.batch')}
+              <ContributionHintLabel hint={t('users.report.hints.batch')}>
+                {t('users.report.table.batch')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-left')}>
-              {t('users.report.table.slot')}
+              <ContributionHintLabel hint={t('users.report.hints.slot')}>
+                {t('users.report.table.slot')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('users.report.table.rejections')}
+              <ContributionHintLabel hint={t('users.report.hints.rejectionCountTask')}>
+                {t('users.report.table.rejections')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('users.report.table.finalChars')}
+              <ContributionHintLabel hint={t('users.report.hints.finalCharCount')}>
+                {t('users.report.table.finalChars')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('users.report.table.charDiff')}
+              <ContributionHintLabel hint={t('users.report.hints.charDiff')}>
+                {t('users.report.table.charDiff')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('users.report.table.percentDiff')}
+              <ContributionHintLabel hint={t('users.report.hints.charPercentDiff')}>
+                {t('users.report.table.percentDiff')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('users.report.table.date')}
+              <ContributionHintLabel hint={t('users.report.hints.date')}>
+                {t('users.report.table.date')}
+              </ContributionHintLabel>
             </th>
           </tr>
         </thead>
@@ -219,46 +236,74 @@ function ContributionsTable({ tasks, role }: ContributionsTableProps) {
         <thead>
           <tr>
             <th className={cn(contributionTableHeadCellClass, 'text-left')}>
-              {t('users.report.table.imageName')}
+              <ContributionHintLabel hint={t('users.report.hints.imageName')}>
+                {t('users.report.table.imageName')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-left')}>
-              {t('users.report.table.batch')}
+              <ContributionHintLabel hint={t('users.report.hints.batch')}>
+                {t('users.report.table.batch')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-left')}>
-              {t('users.report.table.slot')}
+              <ContributionHintLabel hint={t('users.report.hints.slot')}>
+                {t('users.report.table.slot')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('users.report.table.rejections')}
+              <ContributionHintLabel hint={t('users.report.hints.rejectionCountTask')}>
+                {t('users.report.table.rejections')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('users.report.summary.rejectionsMade')}
+              <ContributionHintLabel hint={t('users.report.hints.rejectionsMade')}>
+                {t('users.report.summary.rejectionsMade')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('users.report.table.reviewChars')}
+              <ContributionHintLabel hint={t('users.report.hints.reviewCharCount')}>
+                {t('users.report.table.reviewChars')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('users.report.table.reviewCharDiff')}
+              <ContributionHintLabel hint={t('users.report.hints.reviewCharDiff')}>
+                {t('users.report.table.reviewCharDiff')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('users.report.table.finalChars')}
+              <ContributionHintLabel hint={t('users.report.hints.finalCharCount')}>
+                {t('users.report.table.finalChars')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('users.report.table.charDiff')}
+              <ContributionHintLabel hint={t('users.report.hints.charDiff')}>
+                {t('users.report.table.charDiff')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('users.report.table.percentDiff')}
+              <ContributionHintLabel hint={t('users.report.hints.charPercentDiff')}>
+                {t('users.report.table.percentDiff')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('users.report.table.ownVersion')}
+              <ContributionHintLabel hint={t('users.report.hints.ownVersion')}>
+                {t('users.report.table.ownVersion')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('users.report.table.selectedOption')}
+              <ContributionHintLabel hint={t('users.report.hints.selectedOption')}>
+                {t('users.report.table.selectedOption')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('users.report.table.modifiedOption')}
+              <ContributionHintLabel hint={t('users.report.hints.modifiedOption')}>
+                {t('users.report.table.modifiedOption')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('users.report.table.date')}
+              <ContributionHintLabel hint={t('users.report.hints.date')}>
+                {t('users.report.table.date')}
+              </ContributionHintLabel>
             </th>
           </tr>
         </thead>
@@ -277,34 +322,49 @@ function ContributionsTable({ tasks, role }: ContributionsTableProps) {
         <thead>
           <tr>
             <th className={cn(contributionTableHeadCellClass, 'text-left')}>
-              {t('users.report.table.imageName')}
+              <ContributionHintLabel hint={t('users.report.hints.imageName')}>
+                {t('users.report.table.imageName')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-left')}>
-              {t('users.report.table.batch')}
+              <ContributionHintLabel hint={t('users.report.hints.batch')}>
+                {t('users.report.table.batch')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('users.report.table.rejections')}
+              <ContributionHintLabel hint={t('users.report.hints.finalCharCount')}>
+                {t('users.report.table.finalChars')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('users.report.table.finalChars')}
+              <ContributionHintLabel hint={t('users.report.hints.charDiff')}>
+                {t('users.report.table.charDiff')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('users.report.table.charDiff')}
+              <ContributionHintLabel hint={t('users.report.hints.charPercentDiff')}>
+                {t('users.report.table.percentDiff')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('users.report.table.percentDiff')}
+              <ContributionHintLabel hint={t('users.report.hints.ownVersion')}>
+                {t('users.report.table.ownVersion')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('users.report.table.ownVersion')}
+              <ContributionHintLabel hint={t('users.report.hints.selectedOption')}>
+                {t('users.report.table.selectedOption')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('users.report.table.selectedOption')}
+              <ContributionHintLabel hint={t('users.report.hints.modifiedOption')}>
+                {t('users.report.table.modifiedOption')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('users.report.table.modifiedOption')}
-            </th>
-            <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('users.report.table.date')}
+              <ContributionHintLabel hint={t('users.report.hints.date')}>
+                {t('users.report.table.date')}
+              </ContributionHintLabel>
             </th>
           </tr>
         </thead>
@@ -359,7 +419,11 @@ function BatchBadge({ name }: { name: string }) {
   )
 }
 
-function RejectionCell({ count }: { count: number }) {
+function RejectionCell({ count }: { count: number | null | undefined }) {
+  if (count == null) {
+    return <span className="text-muted-foreground">—</span>
+  }
+
   if (count <= 0) {
     return <span className="text-muted-foreground">0</span>
   }
@@ -433,7 +497,7 @@ function ReviewerContributionRow({ task, role }: ContributionRowProps) {
         <RejectionCell count={task.rejection_count} />
       </td>
       <td className="px-4 py-2.5 text-right font-mono text-xs">
-        <RejectionCell count={getTaskRejectionsMadeCount(task)} />
+        <RejectionCell count={getTaskRejectionsMadeValue(task)} />
       </td>
       <td className="px-4 py-2.5 text-right font-mono text-xs">
         {formatReportNumber(task.review_char_count)}
@@ -474,9 +538,6 @@ function FinalReviewerContributionRow({ task }: { task: Itv2ContributionTask }) 
       </td>
       <td className="px-4 py-2.5">
         <BatchBadge name={task.batch_name} />
-      </td>
-      <td className="px-4 py-2.5 text-right font-mono text-xs">
-        <RejectionCell count={task.rejection_count} />
       </td>
       <td className="px-4 py-2.5 text-right font-mono text-xs">
         {formatReportNumber(task.final_char_count)}
@@ -526,7 +587,7 @@ function ContributionsTableSkeleton({ role }: { role: UserRole | undefined }) {
       : role === UserRole.Reviewer
         ? 14
         : role === UserRole.FinalReviewer
-          ? 10
+          ? 9
           : 3
 
   return (

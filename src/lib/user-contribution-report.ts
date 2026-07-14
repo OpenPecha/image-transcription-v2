@@ -65,8 +65,16 @@ export function getSummaryRejectionsMadePercent(
 export function getTaskRejectionsMadeCount(
   task: { rejections_made_count?: number | null; rejections_made?: number | null } | null | undefined
 ): number {
-  if (!task) return 0
-  return task.rejections_made_count ?? task.rejections_made ?? 0
+  return getTaskRejectionsMadeValue(task) ?? 0
+}
+
+/** Raw per-task rejections-made value; `null` when N/A (e.g. Reviewer B / not reviewed). */
+export function getTaskRejectionsMadeValue(
+  task: { rejections_made_count?: number | null; rejections_made?: number | null } | null | undefined
+): number | null {
+  if (!task) return null
+  const value = task.rejections_made_count ?? task.rejections_made
+  return value === undefined ? null : value
 }
 
 export function emptyContributionReport(): UserContributionReportResponse {

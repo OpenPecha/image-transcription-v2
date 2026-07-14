@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import type { AnnotatorContributionRow } from '@/types'
 import { AnnotatorContributionTableRow } from './annotator-contribution-row'
+import { ContributionHintLabel } from './contribution-hint-label'
 import {
   contributionTableClass,
   contributionTableHeadCellClass,
@@ -39,31 +40,49 @@ export function AnnotatorContributionTable({
               {t('userContributions.tables.annotator.username')}
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('userContributions.tables.annotator.tasksAnnotated')}
+              <ContributionHintLabel hint={t('users.report.hints.tasksAnnotated')}>
+                {t('userContributions.tables.annotator.tasksAnnotated')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('userContributions.tables.annotator.tasksReviewed')}
+              <ContributionHintLabel hint={t('users.report.hints.tasksReviewed')}>
+                {t('userContributions.tables.annotator.tasksReviewed')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('userContributions.tables.annotator.tasksFinalReviewed')}
+              <ContributionHintLabel hint={t('users.report.hints.tasksFinalReviewed')}>
+                {t('userContributions.tables.annotator.tasksFinalReviewed')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('userContributions.tables.annotator.rejectedCount')}
+              <ContributionHintLabel hint={t('users.report.hints.rejectionCountAnnotator')}>
+                {t('userContributions.tables.annotator.rejectedCount')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('userContributions.tables.annotator.rejectedPercent')}
+              <ContributionHintLabel hint={t('users.report.hints.rejectedPercentAnnotator')}>
+                {t('userContributions.tables.annotator.rejectedPercent')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('userContributions.tables.annotator.unrejectedPercent')}
+              <ContributionHintLabel hint={t('users.report.hints.unrejectedPercentAnnotator')}>
+                {t('userContributions.tables.annotator.unrejectedPercent')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('userContributions.tables.annotator.finalCharCount')}
+              <ContributionHintLabel hint={t('users.report.hints.finalCharCountSummary')}>
+                {t('userContributions.tables.annotator.finalCharCount')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('userContributions.tables.annotator.charDiff')}
+              <ContributionHintLabel hint={t('users.report.hints.charDiffSummary')}>
+                {t('userContributions.tables.annotator.charDiff')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('userContributions.tables.annotator.charPercentDiff')}
+              <ContributionHintLabel hint={t('users.report.hints.charPercentDiffSummary')}>
+                {t('userContributions.tables.annotator.charPercentDiff')}
+              </ContributionHintLabel>
             </th>
           </tr>
         </thead>

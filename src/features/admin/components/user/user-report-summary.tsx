@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ContributionHintLabel } from '@/features/admin/components/contributions/summary/contribution-hint-label'
 import {
   formatReportCountSum,
   formatReportNumber,
@@ -30,6 +31,7 @@ interface UserReportSummaryProps {
 interface StatCard {
   value: string | number
   label: string
+  hint: string
   bg: string
 }
 
@@ -73,46 +75,55 @@ export function UserReportSummary({ role, summary, isLoading }: UserReportSummar
         {
           value: summary.tasks_annotated ?? summary.total_count ?? 0,
           label: t('users.report.summary.tasksCompleted'),
+          hint: t('users.report.hints.tasksCompleted'),
           bg: STAT_CARD_BG.emerald,
         },
         {
           value: summary.tasks_reviewed ?? 0,
           label: t('users.report.summary.tasksReviewed'),
+          hint: t('users.report.hints.tasksReviewed'),
           bg: STAT_CARD_BG.blue,
         },
         {
           value: summary.tasks_final_reviewed ?? 0,
           label: t('users.report.summary.tasksFinalReviewed'),
+          hint: t('users.report.hints.tasksFinalReviewed'),
           bg: STAT_CARD_BG.sky,
         },
         {
           value: getSummaryRejectedCount(summary),
           label: t('users.report.summary.rejectionCount'),
+          hint: t('users.report.hints.rejectionCountAnnotator'),
           bg: STAT_CARD_BG.red,
         },
         {
           value: formatReportPercent(getSummaryRejectedPercent(summary)),
           label: t('users.report.summary.rejectedPercent'),
+          hint: t('users.report.hints.rejectedPercentAnnotator'),
           bg: STAT_CARD_BG.red,
         },
         {
           value: formatReportPercent(getSummaryUnrejectedTasksPercent(summary)),
           label: t('users.report.summary.unrejectedPercent'),
+          hint: t('users.report.hints.unrejectedPercentAnnotator'),
           bg: STAT_CARD_BG.violet,
         },
         {
           value: formatReportNumber(summary.final_char_count),
           label: t('users.report.summary.finalCharCount'),
+          hint: t('users.report.hints.finalCharCountSummary'),
           bg: STAT_CARD_BG.blue,
         },
         {
           value: formatReportSignedNumber(summary.total_char_difference),
           label: t('users.report.summary.charDiffVsFinal'),
+          hint: t('users.report.hints.charDiffSummary'),
           bg: STAT_CARD_BG.amber,
         },
         {
           value: formatReportPercent(summary.char_percent_diff),
           label: t('users.report.summary.charPercentDiff'),
+          hint: t('users.report.hints.charPercentDiffSummary'),
           bg: STAT_CARD_BG.orange,
         },
       ]
@@ -123,66 +134,79 @@ export function UserReportSummary({ role, summary, isLoading }: UserReportSummar
         {
           value: summary.tasks_reviewed ?? summary.total_count ?? 0,
           label: t('users.report.summary.tasksReviewed'),
+          hint: t('users.report.hints.tasksReviewed'),
           bg: STAT_CARD_BG.emerald,
         },
         {
           value: summary.tasks_reviewed_as_r1 ?? 0,
           label: t('users.report.summary.tasksReviewedAsR1'),
+          hint: t('users.report.hints.tasksReviewedAsR1'),
           bg: STAT_CARD_BG.emerald,
         },
         {
           value: summary.tasks_final_reviewed ?? 0,
           label: t('users.report.summary.tasksFinalReviewed'),
+          hint: t('users.report.hints.tasksFinalReviewed'),
           bg: STAT_CARD_BG.sky,
         },
         {
           value: getSummaryRejectedCount(summary),
           label: t('users.report.summary.rejectionCount'),
+          hint: t('users.report.hints.rejectionCountReviewer'),
           bg: STAT_CARD_BG.red,
         },
         {
           value: formatReportPercent(getSummaryRejectedPercent(summary)),
           label: t('users.report.summary.rejectedPercent'),
+          hint: t('users.report.hints.rejectedPercentReviewer'),
           bg: STAT_CARD_BG.red,
         },
         {
           value: formatReportPercent(getSummaryUnrejectedTasksPercent(summary)),
           label: t('users.report.summary.unrejectedPercent'),
+          hint: t('users.report.hints.unrejectedPercentReviewer'),
           bg: STAT_CARD_BG.violet,
         },
         {
           value: formatReportNumber(summary.review_char_count),
           label: t('users.report.summary.reviewCharCount'),
+          hint: t('users.report.hints.reviewCharCountSummary'),
           bg: STAT_CARD_BG.blue,
         },
         {
           value: formatReportSignedNumber(summary.review_total_char_difference),
           label: t('users.report.summary.reviewCharDiff'),
+          hint: t('users.report.hints.reviewCharDiffSummary'),
           bg: STAT_CARD_BG.amber,
         },
         {
           value: formatReportNumber(summary.final_char_count),
           label: t('users.report.summary.finalCharCount'),
+          hint: t('users.report.hints.finalCharCountSummary'),
           bg: STAT_CARD_BG.blue,
         },
         {
           value: formatReportSignedNumber(summary.total_char_difference),
           label: t('users.report.summary.charDiffVsFinal'),
+          hint: t('users.report.hints.charDiffSummary'),
           bg: STAT_CARD_BG.amber,
         },
         {
           value: formatReportPercent(summary.char_percent_diff),
           label: t('users.report.summary.charPercentDiff'),
+          hint: t('users.report.hints.charPercentDiffSummary'),
           bg: STAT_CARD_BG.orange,
         },
         {
           value: getSummaryRejectionsMadeCount(summary),
           label: t('users.report.summary.rejectionsMade'),
+          hint: t('users.report.hints.rejectionsMadeSummaryReviewer'),
           bg: STAT_CARD_BG.red,
         },
         {
           value: formatReportPercent(getSummaryRejectionsMadePercent(summary)),
           label: t('users.report.summary.rejectionsMadePercent'),
+          hint: t('users.report.hints.rejectionsMadePercentReviewer'),
           bg: STAT_CARD_BG.red,
         },
         {
@@ -191,6 +215,7 @@ export function UserReportSummary({ role, summary, isLoading }: UserReportSummar
             summary.own_version_sum
           ),
           label: t('users.report.summary.ownVersion'),
+          hint: t('users.report.hints.ownVersion'),
           bg: STAT_CARD_BG.sky,
         },
         {
@@ -199,6 +224,7 @@ export function UserReportSummary({ role, summary, isLoading }: UserReportSummar
             summary.selected_option_sum
           ),
           label: t('users.report.summary.selectedOption'),
+          hint: t('users.report.hints.selectedOption'),
           bg: STAT_CARD_BG.emerald,
         },
         {
@@ -207,6 +233,7 @@ export function UserReportSummary({ role, summary, isLoading }: UserReportSummar
             summary.modified_option_sum
           ),
           label: t('users.report.summary.modifiedOption'),
+          hint: t('users.report.hints.modifiedOption'),
           bg: STAT_CARD_BG.amber,
         },
       ]
@@ -217,36 +244,43 @@ export function UserReportSummary({ role, summary, isLoading }: UserReportSummar
         {
           value: summary.tasks_finalised ?? summary.total_count ?? 0,
           label: t('users.report.summary.tasksFinalised'),
+          hint: t('users.report.hints.tasksFinalised'),
           bg: STAT_CARD_BG.emerald,
         },
         {
           value: getSummaryRejectionsMadeCount(summary),
           label: t('users.report.summary.rejectionsMade'),
+          hint: t('users.report.hints.rejectionsMadeSummaryFinalReviewer'),
           bg: STAT_CARD_BG.red,
         },
         {
           value: formatReportPercent(getSummaryRejectionsMadePercent(summary)),
           label: t('users.report.summary.rejectionsMadePercent'),
+          hint: t('users.report.hints.rejectionsMadePercentFinalReviewer'),
           bg: STAT_CARD_BG.red,
         },
         {
           value: formatReportPercent(getSummaryUnrejectedTasksPercent(summary)),
           label: t('users.report.summary.unrejectedPercent'),
+          hint: t('users.report.hints.unrejectedPercentFinalReviewer'),
           bg: STAT_CARD_BG.violet,
         },
         {
           value: formatReportNumber(summary.final_char_count),
           label: t('users.report.summary.finalCharCount'),
+          hint: t('users.report.hints.finalCharCountSummary'),
           bg: STAT_CARD_BG.blue,
         },
         {
           value: formatReportSignedNumber(summary.total_char_difference),
           label: t('users.report.summary.charDiffVsFinal'),
+          hint: t('users.report.hints.charDiffSummary'),
           bg: STAT_CARD_BG.amber,
         },
         {
           value: formatReportPercent(summary.char_percent_diff),
           label: t('users.report.summary.charPercentDiff'),
+          hint: t('users.report.hints.charPercentDiffSummary'),
           bg: STAT_CARD_BG.orange,
         },
         {
@@ -255,6 +289,7 @@ export function UserReportSummary({ role, summary, isLoading }: UserReportSummar
             summary.own_version_sum
           ),
           label: t('users.report.summary.ownVersion'),
+          hint: t('users.report.hints.ownVersion'),
           bg: STAT_CARD_BG.sky,
         },
         {
@@ -263,6 +298,7 @@ export function UserReportSummary({ role, summary, isLoading }: UserReportSummar
             summary.selected_option_sum
           ),
           label: t('users.report.summary.selectedOption'),
+          hint: t('users.report.hints.selectedOption'),
           bg: STAT_CARD_BG.emerald,
         },
         {
@@ -271,6 +307,7 @@ export function UserReportSummary({ role, summary, isLoading }: UserReportSummar
             summary.modified_option_sum
           ),
           label: t('users.report.summary.modifiedOption'),
+          hint: t('users.report.hints.modifiedOption'),
           bg: STAT_CARD_BG.amber,
         },
       ]
@@ -295,9 +332,12 @@ export function UserReportSummary({ role, summary, isLoading }: UserReportSummar
           className={`flex min-h-[5.5rem] flex-col items-center justify-center rounded-lg px-3 py-4 ${stat.bg}`}
         >
           <span className="text-xl font-bold tabular-nums sm:text-2xl">{stat.value}</span>
-          <span className="mt-1 text-center text-xs text-muted-foreground sm:text-sm">
+          <ContributionHintLabel
+            hint={stat.hint}
+            className="mt-1 text-center text-xs text-muted-foreground sm:text-sm"
+          >
             {stat.label}
-          </span>
+          </ContributionHintLabel>
         </div>
       ))}
     </div>
