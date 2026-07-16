@@ -70,8 +70,23 @@ The application name used in API endpoints is **`imagetranscriptionv2`**. Tasks 
 
 ## 5. API Limitations (Frontend Impact)
 1. **No Batch Task Listing**: `GET /batch/{batch_id}/tasks` returns `400` or `422`. Users must consume tasks sequentially via `assign`.
-2. **No Batch Export**: `GET /batch/imagetranscriptionv2/{batch_id}/export` returns `400` or `422`.
-3. **No Task Restore**: `POST /tasks/imagetranscriptionv2/{task_id}/restore` is not implemented.
+2. **No Task Restore**: `POST /tasks/imagetranscriptionv2/{task_id}/restore` is not implemented.
+
+### Batch Export Response (`GET /batch/imagetranscriptionv2/{batch_id}/export`)
+```json
+{
+  "batch_name": "string",
+  "tasks": [
+    {
+      "file_number": "string",
+      "image_url": "string",
+      "orientation": "landscape" | "portrait",
+      "final_transcript": "string" | null
+    }
+  ]
+}
+```
+CSV columns: File Number, Image URL, Orientation, Final Transcript.
 
 ---
 

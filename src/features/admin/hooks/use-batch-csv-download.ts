@@ -16,7 +16,7 @@ type UseBatchCsvDownloadReturn = {
 /**
  * Hook to download batch export data as CSV
  *
- * Fetches detailed batch export data and triggers CSV download
+ * Fetches batch export data and triggers CSV download
  * Uses batch_name from API response for the filename
  */
 export function useBatchCsvDownload({
