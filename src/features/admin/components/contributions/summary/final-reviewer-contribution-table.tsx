@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import type { FinalReviewerContributionRow } from '@/types'
+import { ContributionHintLabel } from './contribution-hint-label'
 import { FinalReviewerContributionTableRow } from './final-reviewer-contribution-row'
 import {
   contributionTableClass,
@@ -39,34 +40,54 @@ export function FinalReviewerContributionTable({
               {t('userContributions.tables.finalReviewer.username')}
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('userContributions.tables.finalReviewer.tasksFinalised')}
+              <ContributionHintLabel hint={t('users.report.hints.tasksFinalised')}>
+                {t('userContributions.tables.finalReviewer.tasksFinalised')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('userContributions.tables.finalReviewer.rejectionsMade')}
+              <ContributionHintLabel hint={t('users.report.hints.rejectionsMadeSummaryFinalReviewer')}>
+                {t('userContributions.tables.finalReviewer.rejectionsMade')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('userContributions.tables.finalReviewer.rejectionsMadePercent')}
+              <ContributionHintLabel hint={t('users.report.hints.rejectionsMadePercentFinalReviewer')}>
+                {t('userContributions.tables.finalReviewer.rejectionsMadePercent')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('userContributions.tables.finalReviewer.unrejectedPercent')}
+              <ContributionHintLabel hint={t('users.report.hints.unrejectedPercentFinalReviewer')}>
+                {t('userContributions.tables.finalReviewer.unrejectedPercent')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('userContributions.tables.finalReviewer.finalCharCount')}
+              <ContributionHintLabel hint={t('users.report.hints.finalCharCountSummary')}>
+                {t('userContributions.tables.finalReviewer.finalCharCount')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('userContributions.tables.finalReviewer.charDiff')}
+              <ContributionHintLabel hint={t('users.report.hints.charDiffSummary')}>
+                {t('userContributions.tables.finalReviewer.charDiff')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('userContributions.tables.finalReviewer.charPercentDiff')}
+              <ContributionHintLabel hint={t('users.report.hints.charPercentDiffSummary')}>
+                {t('userContributions.tables.finalReviewer.charPercentDiff')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('userContributions.tables.finalReviewer.ownVersion')}
+              <ContributionHintLabel hint={t('users.report.hints.ownVersion')}>
+                {t('userContributions.tables.finalReviewer.ownVersion')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('userContributions.tables.finalReviewer.selectedOption')}
+              <ContributionHintLabel hint={t('users.report.hints.selectedOption')}>
+                {t('userContributions.tables.finalReviewer.selectedOption')}
+              </ContributionHintLabel>
             </th>
             <th className={cn(contributionTableHeadCellClass, 'text-right')}>
-              {t('userContributions.tables.finalReviewer.modifiedOption')}
+              <ContributionHintLabel hint={t('users.report.hints.modifiedOption')}>
+                {t('userContributions.tables.finalReviewer.modifiedOption')}
+              </ContributionHintLabel>
             </th>
           </tr>
         </thead>
