@@ -10,6 +10,7 @@ const CSV_COLUMNS = [
   { key: 'file_number', header: 'File Number' },
   { key: 'image_url', header: 'Image URL' },
   { key: 'orientation', header: 'Orientation' },
+  { key: 'state', header: 'Status' },
   { key: 'final_transcript', header: 'Final Transcript' },
 ] as const satisfies ReadonlyArray<{ key: keyof BatchExportTask; header: string }>
 

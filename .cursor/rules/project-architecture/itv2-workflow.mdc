@@ -81,12 +81,13 @@ The application name used in API endpoints is **`imagetranscriptionv2`**. Tasks 
       "file_number": "string",
       "image_url": "string",
       "orientation": "landscape" | "portrait",
+      "state": "pending" | "half_annotated" | "annotated" | "half_reviewed" | "reviewed" | "finalised" | "trashed",
       "final_transcript": "string" | null
     }
   ]
 }
 ```
-CSV columns: File Number, Image URL, Orientation, Final Transcript.
+CSV columns: File Number, Image URL, Orientation, Status, Final Transcript.
 
 ---
 

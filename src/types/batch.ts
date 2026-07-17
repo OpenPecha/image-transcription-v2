@@ -12,6 +12,7 @@ export type BatchExportTask = {
   file_number: string
   image_url: string
   orientation: 'landscape' | 'portrait'
+  state: BatchTaskState
   final_transcript: string | null
 }
 
