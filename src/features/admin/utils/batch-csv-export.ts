@@ -9,22 +9,9 @@ import type { BatchExportTask } from '@/types'
 const CSV_COLUMNS = [
   { key: 'file_number', header: 'File Number' },
   { key: 'image_url', header: 'Image URL' },
-  { key: 'initial_transcription', header: 'Initial Transcription' },
-  { key: 'status', header: 'Status' },
-  { key: 'annotator_username', header: 'Annotator' },
-  { key: 'annotation_transcript', header: 'Annotation Transcript' },
-  { key: 'annotator_char_count', header: 'Annotator Char Count' },
-  { key: 'annotation_rejection_count', header: 'Annotation Rejection Count' },
-  { key: 'reviewer_username', header: 'Reviewer' },
-  { key: 'review_transcript', header: 'Review Transcript' },
-  { key: 'reviewer_added_char', header: 'Reviewer Added Char' },
-  { key: 'reviewer_deleted_char', header: 'Reviewer Deleted Char' },
-  { key: 'review_rejection_count', header: 'Review Rejection Count' },
-  { key: 'final_reviewer_username', header: 'Final Reviewer' },
+  { key: 'orientation', header: 'Orientation' },
+  { key: 'state', header: 'Status' },
   { key: 'final_transcript', header: 'Final Transcript' },
-  { key: 'final_reviewer_added_char', header: 'Final Reviewer Added Char' },
-  { key: 'final_reviewer_deleted_char', header: 'Final Reviewer Deleted Char' },
-  { key: 'trashed_by', header: 'Trashed By' },
 ] as const satisfies ReadonlyArray<{ key: keyof BatchExportTask; header: string }>
 
 /**
